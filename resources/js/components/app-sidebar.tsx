@@ -1,5 +1,15 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid } from 'lucide-react';
+import {
+    LayoutGrid,
+    Megaphone,
+    Tags,
+    Menu as MenuIcon,
+    Users,
+    FileText,
+    Image as ImageIcon,
+    History,
+    Globe
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -19,21 +29,51 @@ import type { NavItem } from '@/types';
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: dashboard(),
+        href: '/admin/dashboard',
         icon: LayoutGrid,
+    },
+    {
+        title: 'Pengumuman',
+        href: '/admin/announcements',
+        icon: Megaphone,
+    },
+    {
+        title: 'Kategori',
+        href: '/admin/categories',
+        icon: Tags,
+    },
+    {
+        title: 'Menu Navigasi',
+        href: '/admin/menus',
+        icon: MenuIcon,
+    },
+    {
+        title: 'Halaman Statis',
+        href: '/admin/static-pages',
+        icon: FileText,
+    },
+    {
+        title: 'Banner Hero',
+        href: '/admin/banners',
+        icon: ImageIcon,
+    },
+    {
+        title: 'Pengguna',
+        href: '/admin/users',
+        icon: Users,
+    },
+    {
+        title: 'Log Aktivitas',
+        href: '/admin/activity-logs',
+        icon: History,
     },
 ];
 
 const footerNavItems: NavItem[] = [
     {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: FolderGit2,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
+        title: 'Lihat Website',
+        href: '/',
+        icon: Globe,
     },
 ];
 
