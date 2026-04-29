@@ -63,4 +63,34 @@ class Announcement extends Model
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now());
     }
+
+    public function scopeFilter($query, array $filters)
+    {
+        $query->when($filters['search'] ?? null, fn ($q, $search) =>
+            $q->where('title', 'like', "%{$search}%")
+        );
+
+        $query->when(
+            ($filters['category_id'] ?? null) && $filters['category_id'] !== 'all',
+            fn ($q, $category_id) => $q->where('category_id', $category_id)
+        );
+
+        $query->when(
+            ($filters['status'] ?? null) && $filters['status'] !== 'all',
+            fn ($q, $status) => $q->where('status', $status)
+        );
+
+        $query->when(
+            ($filters['type'] ?? null) && $filters['type'] !== 'all',
+            fn ($q, $type) => $q->where('type', $type)
+        );
+
+        $query->when($filters['date_from'] ?? null, fn ($q, $date_from) =>
+            $q->whereDate('created_at', '>=', $date_from)
+        );
+
+        $query->when($filters['date_to'] ?? null, fn ($q, $date_to) =>
+            $q->whereDate('created_at', '<=', $date_to)
+        );
+    }
 }

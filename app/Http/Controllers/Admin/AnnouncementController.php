@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreAnnouncementRequest;
+use App\Http\Requests\Admin\UpdateAnnouncementRequest;
 use App\Models\Announcement;
 use App\Models\Category;
 use Illuminate\Http\Request;
@@ -13,89 +15,85 @@ class AnnouncementController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Announcement::with('category', 'author');
+        $filters = $request->only(['search', 'category_id', 'status', 'type', 'date_from', 'date_to']);
 
-        if ($request->search) {
-            $query->where('title', 'like', '%' . $request->search . '%');
-        }
+        $announcements = Announcement::with('category', 'author')
+            ->filter($filters)
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
 
         return Inertia::render('admin/announcements/index', [
-            'announcements' => $query->latest()->paginate(10)->withQueryString(),
-            'filters' => $request->only(['search']),
+            'announcements' => $announcements,
+            'filters' => $filters,
+            'categories' => Category::orderBy('name')->get(),
         ]);
     }
 
     public function create()
     {
         return Inertia::render('admin/announcements/create', [
-            'categories' => Category::all(),
+            'categories' => Category::orderBy('name')->get(),
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreAnnouncementRequest $request)
     {
-        $validated = $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
-            'status' => 'required|in:draft,published',
-            'type' => 'required|in:regular,event',
-            'thumbnail' => 'nullable|image|max:2048',
-            'published_at' => 'nullable|date',
-        ]);
+        $validated = $request->validated();
 
         if ($request->hasFile('thumbnail')) {
             $validated['thumbnail'] = $request->file('thumbnail')->store('announcements', 'public');
         }
 
         $validated['author_id'] = $request->user()->id;
-        $validated['slug'] = Str::slug($validated['title']) . '-' . rand(1000, 9999);
-        
-        if ($validated['status'] === 'published' && !$validated['published_at']) {
+        $validated['slug'] = Str::slug($validated['title']) . '-' . now()->format('His');
+
+        if ($validated['status'] === 'published' && empty($validated['published_at'])) {
             $validated['published_at'] = now();
         }
 
         $announcement = Announcement::create($validated);
 
-        if ($validated['type'] === 'event' && $request->event_detail) {
-            $announcement->eventDetail()->create($request->event_detail);
+        if ($validated['type'] === 'event' && !empty($request->validated('event_detail'))) {
+            $announcement->eventDetail()->create($request->validated('event_detail'));
         }
 
         return redirect()->route('admin.announcements.index')->with('success', 'Pengumuman berhasil dibuat.');
     }
 
-    public function edit(Announcement $announcement)
+    public function show(Announcement $announcement)
     {
-        return Inertia::render('admin/announcements/edit', [
-            'announcement' => $announcement->load('eventDetail'),
-            'categories' => Category::all(),
+        return Inertia::render('admin/announcements/show', [
+            'announcement' => $announcement->load('eventDetail', 'category', 'author'),
         ]);
     }
 
-    public function update(Request $request, Announcement $announcement)
+    public function edit(Announcement $announcement)
     {
-        $validated = $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
-            'status' => 'required|in:draft,published',
-            'type' => 'required|in:regular,event',
-            'thumbnail' => 'nullable|image|max:2048',
-            'published_at' => 'nullable|date',
+        return Inertia::render('admin/announcements/edit', [
+            'announcement' => $announcement->load('eventDetail', 'category'),
+            'categories' => Category::orderBy('name')->get(),
         ]);
+    }
+
+    public function update(UpdateAnnouncementRequest $request, Announcement $announcement)
+    {
+        $validated = $request->validated();
 
         if ($request->hasFile('thumbnail')) {
             $validated['thumbnail'] = $request->file('thumbnail')->store('announcements', 'public');
         }
 
-        if ($validated['status'] === 'published' && !$validated['published_at'] && !$announcement->published_at) {
+        if ($validated['status'] === 'published' && empty($validated['published_at']) && !$announcement->published_at) {
             $validated['published_at'] = now();
         }
 
         $announcement->update($validated);
 
-        if ($validated['type'] === 'event' && $request->event_detail) {
-            $announcement->eventDetail()->updateOrCreate([], $request->event_detail);
+        if ($validated['type'] === 'event') {
+            if ($request->validated('event_detail')) {
+                $announcement->eventDetail()->updateOrCreate([], $request->validated('event_detail'));
+            }
         } else {
             $announcement->eventDetail()->delete();
         }
@@ -106,6 +104,7 @@ class AnnouncementController extends Controller
     public function destroy(Announcement $announcement)
     {
         $announcement->delete();
+
         return redirect()->route('admin.announcements.index')->with('success', 'Pengumuman berhasil dihapus.');
     }
 }
