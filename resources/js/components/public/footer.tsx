@@ -1,7 +1,34 @@
 import React from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 
 export default function Footer() {
+    const { contactPage } = usePage().props as any;
+
+    // Extract contact info from content or use fallback
+    const getContactInfo = () => {
+        if (!contactPage || !contactPage.content) {
+            return {
+                address: 'Jl. Riau Ujung No. 73, Pekanbaru',
+                email: 'lpdsa@univrab.ac.id',
+                phone: '(0761) 123456'
+            };
+        }
+
+        // Try to extract from HTML content
+        const content = contactPage.content;
+        const addressMatch = content.match(/Alamat:\s*([^<]+)/);
+        const emailMatch = content.match(/Email:\s*([^<]+)/);
+        const phoneMatch = content.match(/Telp:\s*([^<]+)/);
+
+        return {
+            address: addressMatch ? addressMatch[1].trim() : 'Jl. Riau Ujung No. 73, Pekanbaru',
+            email: emailMatch ? emailMatch[1].trim() : 'lpdsa@univrab.ac.id',
+            phone: phoneMatch ? phoneMatch[1].trim() : '(0761) 123456'
+        };
+    };
+
+    const contactInfo = getContactInfo();
+
     return (
         <footer className="bg-slate-900 text-slate-300 dark:bg-neutral-900">
             <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -24,9 +51,9 @@ export default function Footer() {
                     <div>
                         <h3 className="text-white font-bold text-lg mb-4">Hubungi Kami</h3>
                         <p className="text-sm">
-                            Jl. Riau Ujung No. 73, Pekanbaru<br />
-                            Email: lpdsa@univrab.ac.id<br />
-                            Telp: (0761) 123456
+                            {contactInfo.address}<br />
+                            Email: {contactInfo.email}<br />
+                            Telp: {contactInfo.phone}
                         </p>
                     </div>
                 </div>

@@ -1,12 +1,11 @@
 import { Head, Link } from '@inertiajs/react';
-import PublicLayout from '@/layouts/public-layout';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, User, FileText, ExternalLink, MapPin, Clock, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Show({ announcement }: any) {
     return (
-        <PublicLayout>
+        <>
             <Head title={announcement.title} />
 
             <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
@@ -98,6 +97,6 @@ export default function Show({ announcement }: any) {
                     </div>
                 )}
             </div>
-        </PublicLayout>
+        </>
     );
 }

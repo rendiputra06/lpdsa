@@ -1,5 +1,4 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import PublicLayout from '@/layouts/public-layout';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Search, Filter } from 'lucide-react';
@@ -18,7 +17,7 @@ export default function Index({ announcements, categories, filters }: any) {
     };
 
     return (
-        <PublicLayout>
+        <>
             <Head title="Arsip Pengumuman" />
 
             <div className="bg-slate-100 py-12 dark:bg-neutral-900/50">
@@ -125,6 +124,6 @@ export default function Index({ announcements, categories, filters }: any) {
                     </div>
                 </div>
             </div>
-        </PublicLayout>
+        </>
     );
 }

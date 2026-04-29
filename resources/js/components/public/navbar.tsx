@@ -76,7 +76,14 @@ export default function Navbar() {
                                 {menu.label}
                             </Link>
                         ))}
-                        {!auth.user && (
+                        {auth.user ? (
+                            <Link
+                                href="/dashboard"
+                                className="block rounded-md px-3 py-2 text-base font-medium bg-univrab-blue text-white hover:bg-blue-800"
+                            >
+                                Dashboard
+                            </Link>
+                        ) : (
                             <Link
                                 href="/login"
                                 className="block rounded-md px-3 py-2 text-base font-medium text-univrab-blue hover:bg-slate-100"

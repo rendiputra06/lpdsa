@@ -1,16 +1,9 @@
 import { Head, useForm } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Search, Clock } from 'lucide-react';
-import { BreadcrumbItem } from '@/types';
 import { Link } from '@inertiajs/react';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/admin/dashboard' },
-    { title: 'Log Aktivitas', href: '/admin/activity-logs' },
-];
 
 export default function Index({ logs, filters }: any) {
     const { data, setData, get } = useForm({
@@ -23,7 +16,7 @@ export default function Index({ logs, filters }: any) {
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Log Aktivitas" />
 
             <div className="mb-6">
@@ -95,6 +88,6 @@ export default function Index({ logs, filters }: any) {
                     <div className="py-20 text-center text-slate-500">Belum ada catatan aktivitas.</div>
                 )}
             </div>
-        </AppLayout>
+        </>
     );
 }

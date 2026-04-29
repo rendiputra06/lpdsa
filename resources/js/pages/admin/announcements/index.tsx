@@ -1,16 +1,9 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash, Plus, Search } from 'lucide-react';
-import { BreadcrumbItem } from '@/types';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/admin/dashboard' },
-    { title: 'Manajemen Pengumuman', href: '/admin/announcements' },
-];
 
 export default function Index({ announcements, filters }: any) {
     const { data, setData, get, delete: destroy } = useForm({
@@ -29,7 +22,7 @@ export default function Index({ announcements, filters }: any) {
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Manajemen Pengumuman" />
 
             <div className="flex justify-between items-center mb-6">
@@ -107,6 +100,13 @@ export default function Index({ announcements, filters }: any) {
                     ))}
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = {
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'Manajemen Pengumuman', href: '/admin/announcements' },
+    ],
+};

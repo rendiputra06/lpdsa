@@ -14,7 +14,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        return Inertia::render('admin/dashboard', [
+        return Inertia::render('dashboard', [
             'stats' => [
                 'totalAnnouncements' => Announcement::count(),
                 'totalCategories' => Category::count(),

@@ -13,11 +13,10 @@ Route::get('/contact', [LandingController::class, 'contact'])->name('contact');
 
 // Authenticated Routes
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
     
     // Admin Routes
     Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
         Route::resource('announcements', \App\Http\Controllers\Admin\AnnouncementController::class);
         Route::resource('categories', \App\Http\Controllers\Admin\CategoryController::class)->except(['create', 'edit', 'show']);
         Route::resource('menus', \App\Http\Controllers\Admin\MenuController::class)->except(['create', 'edit', 'show']);

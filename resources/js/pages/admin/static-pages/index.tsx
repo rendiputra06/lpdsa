@@ -1,18 +1,11 @@
 import { Head, Link } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, ExternalLink } from 'lucide-react';
-import { BreadcrumbItem } from '@/types';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/admin/dashboard' },
-    { title: 'Halaman Statis', href: '/admin/static-pages' },
-];
 
 export default function Index({ pages }: any) {
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Manajemen Halaman Statis" />
 
             <div className="mb-6">
@@ -55,6 +48,13 @@ export default function Index({ pages }: any) {
                     </TableBody>
                 </Table>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = {
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'Halaman Statis', href: '/admin/static-pages' },
+    ],
+};

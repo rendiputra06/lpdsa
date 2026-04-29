@@ -1,19 +1,50 @@
 import { Head, Link } from '@inertiajs/react';
-import PublicLayout from '@/layouts/public-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, ArrowRight } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Calendar, ArrowRight, AlertCircle } from 'lucide-react';
 
 export default function Welcome({ banners, latestAnnouncements }: any) {
+    // Loading state
+    const isLoading = !banners || !latestAnnouncements;
+
+    // Error handling for missing data
+    if (!banners || !latestAnnouncements) {
+        return (
+            <>
+                <Head title="Pusat Pengumuman LPDSA" />
+                <div className="flex items-center justify-center min-h-[50vh]">
+                    <div className="text-center">
+                        <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                        <p className="text-slate-600 dark:text-neutral-400">Terjadi kesalahan saat memuat data. Silakan refresh halaman.</p>
+                    </div>
+                </div>
+            </>
+        );
+    }
+
     return (
-        <PublicLayout>
-            <Head title="Pusat Pengumuman LPDSA" />
+        <>
+            <Head title="Pusat Pengumuman LPDSA">
+                <meta name="description" content="Pusat Pengumuman LPDSA Universitas Abdurrab - Lembaga Pangkalan Data, SPMI, dan Akreditasi. Dapatkan informasi terkini seputar akademik, akreditasi, dan kegiatan universitas." />
+                <meta property="og:title" content="Pusat Pengumuman LPDSA - Universitas Abdurrab" />
+                <meta property="og:description" content="Lembaga Pangkalan Data, SPMI, dan Akreditasi Universitas Abdurrab. Menjamin mutu akademik dan akurasi data universitas." />
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content={window.location.href} />
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content="Pusat Pengumuman LPDSA - Universitas Abdurrab" />
+                <meta name="twitter:description" content="Lembaga Pangkalan Data, SPMI, dan Akreditasi Universitas Abdurrab." />
+            </Head>
 
             {/* Hero Section / Banner */}
             <section className="relative bg-univrab-blue py-20 overflow-hidden">
                 <div className="absolute inset-0 opacity-10">
-                    <div className="absolute inset-0 bg-[url('https://univrab.ac.id/wp-content/uploads/2021/08/Gedung-Univrab.jpg')] bg-cover bg-center" />
+                    {banners.length > 0 && banners[0].image_path ? (
+                        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${banners[0].image_path})` }} />
+                    ) : (
+                        <div className="absolute inset-0 bg-[url('https://univrab.ac.id/wp-content/uploads/2021/08/Gedung-Univrab.jpg')] bg-cover bg-center" />
+                    )}
                 </div>
                 <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-white text-center">
                     {banners.length > 0 ? (
@@ -28,7 +59,7 @@ export default function Welcome({ banners, latestAnnouncements }: any) {
                                 <Button size="lg" className="bg-univrab-gold text-slate-900 hover:bg-yellow-500" asChild>
                                     <Link href="/announcements">Lihat Pengumuman</Link>
                                 </Button>
-                                <Button size="lg" variant="outline" className="text-white border-white hover:bg-white/10" asChild>
+                                <Button size="lg" variant="outline" className="border-univrab-blue text-univrab-blue hover:bg-univrab-blue hover:text-white" asChild>
                                     <Link href="/about">Tentang LPDSA</Link>
                                 </Button>
                             </div>
@@ -65,7 +96,7 @@ export default function Welcome({ banners, latestAnnouncements }: any) {
                                 <CardHeader className="p-0">
                                     <div className="aspect-video w-full bg-slate-100 dark:bg-neutral-800 overflow-hidden relative">
                                         {announcement.thumbnail ? (
-                                            <img src={announcement.thumbnail} alt={announcement.title} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" />
+                                            <img src={announcement.thumbnail} alt={`Thumbnail untuk ${announcement.title}`} loading="lazy" className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" />
                                         ) : (
                                             <div className="flex items-center justify-center h-full text-slate-300 dark:text-neutral-700">
                                                 <Calendar className="h-12 w-12" />
@@ -116,13 +147,30 @@ export default function Welcome({ banners, latestAnnouncements }: any) {
                     <p className="mt-4 text-slate-600 dark:text-neutral-400 max-w-2xl mx-auto text-balance">
                         Jangan ragu untuk menghubungi tim LPDSA Universitas Abdurrab jika Anda memiliki pertanyaan seputar pangkalan data, SPMI, atau akreditasi.
                     </p>
-                    <div className="mt-8">
+                    <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
                         <Button size="lg" className="bg-univrab-blue hover:bg-blue-800" asChild>
                             <Link href="/contact">Hubungi Kami</Link>
                         </Button>
+                        <Button size="lg" variant="outline" className="border-univrab-blue text-univrab-blue hover:bg-univrab-blue hover:text-white" asChild>
+                            <Link href="/announcements">Lihat Pengumuman</Link>
+                        </Button>
+                    </div>
+                    <div className="mt-8 flex flex-wrap justify-center gap-6 text-sm text-slate-500 dark:text-neutral-400">
+                        <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            <span>Informasi Terkini</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="h-4 w-4 rounded-full bg-univrab-blue" />
+                            <span>Akreditasi Terpercaya</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="h-4 w-4 rounded-full bg-univrab-gold" />
+                            <span>SPMI Berkualitas</span>
+                        </div>
                     </div>
                 </div>
             </section>
-        </PublicLayout>
+        </>
     );
 }

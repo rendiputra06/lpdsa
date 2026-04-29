@@ -19,7 +19,6 @@ class LandingController extends Controller
                 ->latest('published_at')
                 ->take(6)
                 ->get(),
-            'categories' => Category::all(),
         ]);
     }
 

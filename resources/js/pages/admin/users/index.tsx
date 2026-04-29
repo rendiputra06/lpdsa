@@ -1,5 +1,4 @@
 import { Head, useForm } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,12 +8,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash, Plus, Key } from 'lucide-react';
 import React from 'react';
-import { BreadcrumbItem } from '@/types';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/admin/dashboard' },
-    { title: 'Manajemen Pengguna', href: '/admin/users' },
-];
 
 export default function Index({ users }: any) {
     const [editingUser, setEditingUser] = React.useState<any>(null);
@@ -65,7 +58,7 @@ export default function Index({ users }: any) {
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Manajemen Pengguna" />
 
             <div className="flex justify-between items-center mb-6">
@@ -185,6 +178,13 @@ export default function Index({ users }: any) {
                     </TableBody>
                 </Table>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = {
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'Manajemen Pengguna', href: '/admin/users' },
+    ],
+};

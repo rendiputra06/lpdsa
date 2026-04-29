@@ -1,16 +1,8 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { BreadcrumbItem } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/admin/dashboard' },
-    { title: 'Halaman Statis', href: '/admin/static-pages' },
-    { title: 'Edit Halaman', href: '#' },
-];
 
 export default function Edit({ page }: any) {
     const { data, setData, put, processing, errors } = useForm({
@@ -25,7 +17,7 @@ export default function Edit({ page }: any) {
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title={`Edit ${page.title}`} />
 
             <div className="max-w-4xl mx-auto">
@@ -81,6 +73,14 @@ export default function Edit({ page }: any) {
                     </div>
                 </form>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Edit.layout = {
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'Halaman Statis', href: '/admin/static-pages' },
+        { title: 'Edit Halaman', href: '#' },
+    ],
+};

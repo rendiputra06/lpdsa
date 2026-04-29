@@ -1,17 +1,9 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BreadcrumbItem } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/admin/dashboard' },
-    { title: 'Manajemen Pengumuman', href: '/admin/announcements' },
-    { title: 'Tambah Pengumuman', href: '/admin/announcements/create' },
-];
 
 export default function Create({ categories }: any) {
     const { data, setData, post, processing, errors } = useForm({
@@ -38,7 +30,7 @@ export default function Create({ categories }: any) {
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Tambah Pengumuman" />
 
             <div className="max-w-4xl mx-auto">
@@ -177,6 +169,14 @@ export default function Create({ categories }: any) {
                     </div>
                 </form>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Create.layout = {
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'Manajemen Pengumuman', href: '/admin/announcements' },
+        { title: 'Tambah Pengumuman', href: '/admin/announcements/create' },
+    ],
+};
