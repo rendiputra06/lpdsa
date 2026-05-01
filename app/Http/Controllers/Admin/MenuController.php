@@ -20,8 +20,8 @@ class MenuController extends Controller
     {
         $validated = $request->validate([
             'label' => 'required|string|max:255',
-            'type' => 'required|in:internal,external',
-            'url' => 'required|string',
+            'type' => 'required|in:internal,external,label',
+            'url' => 'nullable|string',
             'order' => 'required|integer',
             'parent_id' => 'nullable|exists:menus,id',
         ]);
@@ -35,8 +35,8 @@ class MenuController extends Controller
     {
         $validated = $request->validate([
             'label' => 'required|string|max:255',
-            'type' => 'required|in:internal,external',
-            'url' => 'required|string',
+            'type' => 'required|in:internal,external,label',
+            'url' => 'nullable|string',
             'order' => 'required|integer',
             'parent_id' => 'nullable|exists:menus,id',
         ]);

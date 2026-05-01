@@ -58,6 +58,20 @@ class AnnouncementController extends Controller
             $announcement->eventDetail()->create($request->validated('event_detail'));
         }
 
+        if (!empty($validated['attachments'])) {
+            foreach ($validated['attachments'] as $idx => $attachmentData) {
+                if ($attachmentData['type'] === 'file' && $request->hasFile("attachments.{$idx}.file")) {
+                    $attachmentData['path'] = $request->file("attachments.{$idx}.file")->store('announcement_attachments', 'public');
+                }
+
+                $announcement->attachments()->create([
+                    'title' => $attachmentData['title'],
+                    'type' => $attachmentData['type'],
+                    'path' => $attachmentData['path'] ?? '',
+                ]);
+            }
+        }
+
         return redirect()->route('admin.announcements.index')->with('success', 'Pengumuman berhasil dibuat.');
     }
 
@@ -71,7 +85,7 @@ class AnnouncementController extends Controller
     public function edit(Announcement $announcement)
     {
         return Inertia::render('admin/announcements/edit', [
-            'announcement' => $announcement->load('eventDetail', 'category'),
+            'announcement' => $announcement->load('eventDetail', 'category', 'attachments'),
             'categories' => Category::orderBy('name')->get(),
         ]);
     }
@@ -96,6 +110,34 @@ class AnnouncementController extends Controller
             }
         } else {
             $announcement->eventDetail()->delete();
+        }
+
+        if (!empty($validated['attachments_deleted'])) {
+            $announcement->attachments()->whereIn('id', $validated['attachments_deleted'])->delete();
+        }
+
+        if (!empty($validated['attachments'])) {
+            foreach ($validated['attachments'] as $idx => $attachmentData) {
+                $path = $attachmentData['path'] ?? '';
+                
+                if ($attachmentData['type'] === 'file' && $request->hasFile("attachments.{$idx}.file")) {
+                    $path = $request->file("attachments.{$idx}.file")->store('announcement_attachments', 'public');
+                }
+
+                if (!empty($attachmentData['id'])) {
+                    $announcement->attachments()->where('id', $attachmentData['id'])->update([
+                        'title' => $attachmentData['title'],
+                        'type' => $attachmentData['type'],
+                        'path' => $path,
+                    ]);
+                } else {
+                    $announcement->attachments()->create([
+                        'title' => $attachmentData['title'],
+                        'type' => $attachmentData['type'],
+                        'path' => $path,
+                    ]);
+                }
+            }
         }
 
         return redirect()->route('admin.announcements.index')->with('success', 'Pengumuman berhasil diperbarui.');

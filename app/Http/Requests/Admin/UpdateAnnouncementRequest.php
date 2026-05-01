@@ -28,6 +28,14 @@ class UpdateAnnouncementRequest extends FormRequest
             'event_detail.speaker' => 'nullable|string|max:255',
             'event_detail.quota' => 'nullable|integer|min:1',
             'event_detail.registration_link' => 'nullable|url|max:255',
+            'attachments' => 'nullable|array',
+            'attachments.*.id' => 'nullable|integer|exists:announcement_attachments,id',
+            'attachments.*.title' => 'required_with:attachments|string|max:255',
+            'attachments.*.type' => 'required_with:attachments|in:link,file',
+            'attachments.*.file' => 'nullable|file|max:20480',
+            'attachments.*.path' => 'nullable|string|max:1000',
+            'attachments_deleted' => 'nullable|array',
+            'attachments_deleted.*' => 'integer|exists:announcement_attachments,id',
         ];
     }
 

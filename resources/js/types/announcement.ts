@@ -36,6 +36,15 @@ export type AnnouncementDetail = {
         name: string;
     };
     eventDetail?: AnnouncementEventDetail;
+    attachments?: AttachmentItem[];
+};
+
+export type AttachmentItem = {
+    id?: number;
+    title: string;
+    type: 'link' | 'file';
+    file?: File | null;
+    path?: string;
 };
 
 export type AnnouncementFormData = {
@@ -54,6 +63,8 @@ export type AnnouncementFormData = {
         quota: string;
         registration_link: string;
     };
+    attachments: AttachmentItem[];
+    attachments_deleted: number[];
 };
 
 export type AnnouncementFilters = {

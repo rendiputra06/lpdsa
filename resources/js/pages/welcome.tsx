@@ -55,14 +55,6 @@ export default function Welcome({ banners, latestAnnouncements }: any) {
                             <p className="mx-auto mt-6 max-w-2xl text-xl text-blue-100 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-200">
                                 {banners[0].text}
                             </p>
-                            <div className="mt-10 flex justify-center gap-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-400">
-                                <Button size="lg" className="bg-univrab-gold text-slate-900 hover:bg-yellow-500" asChild>
-                                    <Link href="/announcements">Lihat Pengumuman</Link>
-                                </Button>
-                                <Button size="lg" variant="outline" className="border-univrab-blue text-univrab-blue hover:bg-univrab-blue hover:text-white" asChild>
-                                    <Link href="/about">Tentang LPDSA</Link>
-                                </Button>
-                            </div>
                         </div>
                     ) : (
                         <div>
@@ -96,7 +88,7 @@ export default function Welcome({ banners, latestAnnouncements }: any) {
                                 <CardHeader className="p-0">
                                     <div className="aspect-video w-full bg-slate-100 dark:bg-neutral-800 overflow-hidden relative">
                                         {announcement.thumbnail ? (
-                                            <img src={announcement.thumbnail} alt={`Thumbnail untuk ${announcement.title}`} loading="lazy" className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" />
+                                            <img src={`/storage/${announcement.thumbnail}`} alt={`Thumbnail untuk ${announcement.title}`} loading="lazy" className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" />
                                         ) : (
                                             <div className="flex items-center justify-center h-full text-slate-300 dark:text-neutral-700">
                                                 <Calendar className="h-12 w-12" />

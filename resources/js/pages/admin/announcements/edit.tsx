@@ -52,9 +52,9 @@ export default function Edit({ announcement, categories }: EditProps) {
                                 start_at: formatDatetimeLocal(announcement.eventDetail.start_at),
                                 end_at: formatDatetimeLocal(announcement.eventDetail.end_at),
                                 location: announcement.eventDetail.location,
-                                speaker: announcement.eventDetail.speaker,
-                                quota: announcement.eventDetail.quota,
-                                registration_link: announcement.eventDetail.registration_link,
+                                speaker: announcement.eventDetail.speaker || '',
+                                quota: announcement.eventDetail.quota?.toString() || '',
+                                registration_link: announcement.eventDetail.registration_link || '',
                             }
                             : {
                                 start_at: '',
@@ -64,6 +64,7 @@ export default function Edit({ announcement, categories }: EditProps) {
                                 quota: '',
                                 registration_link: '',
                             },
+                        attachments: announcement.attachments ?? [],
                     }}
                     submitUrl={`/admin/announcements/${announcement.id}`}
                     method="put"

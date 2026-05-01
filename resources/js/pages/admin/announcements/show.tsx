@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Calendar, User, Tag, MapPin, Users, LinkIcon, FileText, Settings } from 'lucide-react';
+import { ArrowLeft, Calendar, User, Tag, MapPin, Users, LinkIcon, FileText, Settings, ExternalLink } from 'lucide-react';
 import type { AnnouncementDetail } from '@/types/announcement';
 
 type ShowProps = {
@@ -99,9 +99,10 @@ export default function Show({ announcement }: ShowProps) {
                                 <FileText className="h-5 w-5" />
                                 Konten
                             </h3>
-                            <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap">
-                                {announcement.content}
-                            </div>
+                            <div 
+                                className="prose prose-sm max-w-none dark:prose-invert break-words whitespace-pre-wrap"
+                                dangerouslySetInnerHTML={{ __html: announcement.content }} 
+                            />
                         </div>
 
                         <Separator />
@@ -195,6 +196,35 @@ export default function Show({ announcement }: ShowProps) {
                                 </div>
                             )}
                         </div>
+
+                        {announcement.attachments && announcement.attachments.length > 0 && (
+                            <>
+                                <Separator />
+                                <div>
+                                    <h3 className="font-semibold mb-3 flex items-center gap-2">
+                                        <FileText className="h-5 w-5" />
+                                        Lampiran
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {announcement.attachments.map((file) => (
+                                            <a
+                                                key={file.id}
+                                                href={file.type === 'link' ? file.path : `/storage/${file.path}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center justify-between p-3 rounded-md border text-sm hover:bg-slate-50 transition-colors dark:hover:bg-neutral-800"
+                                            >
+                                                <div className="flex items-center gap-2 overflow-hidden">
+                                                    {file.type === 'file' ? <FileText className="h-4 w-4 shrink-0 text-muted-foreground" /> : <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />}
+                                                    <span className="truncate">{file.title}</span>
+                                                </div>
+                                                <span className="text-xs text-muted-foreground shrink-0">{file.type === 'file' ? 'File' : 'Link'}</span>
+                                            </a>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        )}
 
                         <Separator />
 

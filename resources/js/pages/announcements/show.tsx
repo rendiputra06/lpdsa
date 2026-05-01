@@ -34,7 +34,7 @@ export default function Show({ announcement }: any) {
 
                 {announcement.thumbnail && (
                     <div className="mb-10 overflow-hidden rounded-xl bg-slate-100 dark:bg-neutral-800">
-                        <img src={announcement.thumbnail} alt="" className="w-full object-cover" />
+                        <img src={`/storage/${announcement.thumbnail}`} alt="" className="w-full object-cover" />
                     </div>
                 )}
 
@@ -70,7 +70,10 @@ export default function Show({ announcement }: any) {
                     </div>
                 )}
 
-                <article className="prose prose-slate dark:prose-invert max-w-none mb-12" dangerouslySetInnerHTML={{ __html: announcement.content }} />
+                <article 
+                    className="prose prose-slate dark:prose-invert max-w-none mb-12 break-words whitespace-pre-wrap" 
+                    dangerouslySetInnerHTML={{ __html: announcement.content }} 
+                />
 
                 {/* Attachments */}
                 {announcement.attachments.length > 0 && (
@@ -80,7 +83,7 @@ export default function Show({ announcement }: any) {
                             {announcement.attachments.map((file: any) => (
                                 <a
                                     key={file.id}
-                                    href={file.path}
+                                    href={file.type === 'link' ? file.path : `/storage/${file.path}`}
                                     target="_blank"
                                     className="flex items-center justify-between p-4 rounded-lg border border-slate-200 hover:border-univrab-blue hover:bg-slate-50 transition-all dark:border-neutral-800 dark:hover:bg-neutral-900 group"
                                 >

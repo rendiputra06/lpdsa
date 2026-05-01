@@ -1,19 +1,23 @@
-import { Head, Link, useForm } from '@inertiajs/react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Head, Link, router } from '@inertiajs/react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Search, Filter } from 'lucide-react';
+import { Calendar, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 
 export default function Index({ announcements, categories, filters }: any) {
-    const { data, setData, get } = useForm({
-        search: filters.search || '',
-        category: filters.category || '',
-    });
+    const [search, setSearch] = useState(filters.search || '');
+    const [category, setCategory] = useState(filters.category || '');
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        get('/announcements');
+        router.get('/announcements', { search, category }, { preserveState: true });
+    };
+
+    const handleCategoryClick = (slug: string) => {
+        setCategory(slug);
+        router.get('/announcements', { search, category: slug }, { preserveState: true });
     };
 
     return (
@@ -37,8 +41,8 @@ export default function Index({ announcements, categories, filters }: any) {
                                 <div className="relative">
                                     <Input
                                         placeholder="Cari pengumuman..."
-                                        value={data.search}
-                                        onChange={e => setData('search', e.target.value)}
+                                        value={search}
+                                        onChange={e => setSearch(e.target.value)}
                                         className="pl-10"
                                     />
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -50,8 +54,8 @@ export default function Index({ announcements, categories, filters }: any) {
                                 <div className="flex flex-wrap gap-2">
                                     <button
                                         type="button"
-                                        onClick={() => { setData('category', ''); get('/announcements'); }}
-                                        className={`px-3 py-1 text-xs rounded-full border transition-all ${data.category === '' ? 'bg-univrab-blue text-white border-univrab-blue' : 'bg-white text-slate-600 border-slate-200 hover:border-univrab-blue'}`}
+                                        onClick={() => handleCategoryClick('')}
+                                        className={`px-3 py-1 text-xs rounded-full border transition-all ${category === '' ? 'bg-univrab-blue text-white border-univrab-blue' : 'bg-white text-slate-600 border-slate-200 hover:border-univrab-blue'}`}
                                     >
                                         Semua
                                     </button>
@@ -59,8 +63,8 @@ export default function Index({ announcements, categories, filters }: any) {
                                         <button
                                             key={cat.id}
                                             type="button"
-                                            onClick={() => { setData('category', cat.slug); get('/announcements'); }}
-                                            className={`px-3 py-1 text-xs rounded-full border transition-all ${data.category === cat.slug ? 'bg-univrab-blue text-white border-univrab-blue' : 'bg-white text-slate-600 border-slate-200 hover:border-univrab-blue'}`}
+                                            onClick={() => handleCategoryClick(cat.slug)}
+                                            className={`px-3 py-1 text-xs rounded-full border transition-all ${category === cat.slug ? 'bg-univrab-blue text-white border-univrab-blue' : 'bg-white text-slate-600 border-slate-200 hover:border-univrab-blue'}`}
                                         >
                                             {cat.name}
                                         </button>
@@ -82,7 +86,7 @@ export default function Index({ announcements, categories, filters }: any) {
                                     <CardHeader className="p-0">
                                         <div className="aspect-video bg-slate-50 dark:bg-neutral-800">
                                             {announcement.thumbnail && (
-                                                <img src={announcement.thumbnail} alt="" className="h-full w-full object-cover" />
+                                                <img src={`/storage/${announcement.thumbnail}`} alt="" className="h-full w-full object-cover" />
                                             )}
                                         </div>
                                     </CardHeader>
@@ -104,15 +108,27 @@ export default function Index({ announcements, categories, filters }: any) {
 
                         {/* Pagination */}
                         {announcements.links.length > 3 && (
-                            <div className="mt-12 flex justify-center gap-2">
-                                {announcements.links.map((link: any, i: number) => (
-                                    <Link
-                                        key={i}
-                                        href={link.url || '#'}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                        className={`px-4 py-2 text-sm rounded-md border ${link.active ? 'bg-univrab-blue text-white border-univrab-blue' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
-                                    />
-                                ))}
+                            <div className="mt-12 flex justify-center gap-2 flex-wrap">
+                                {announcements.links.map((link: any, i: number) => {
+                                    if (link.url === null) {
+                                        return (
+                                            <span
+                                                key={i}
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                                className="px-4 py-2 text-sm rounded-md border bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+                                            />
+                                        );
+                                    }
+
+                                    return (
+                                        <Link
+                                            key={i}
+                                            href={link.url}
+                                            dangerouslySetInnerHTML={{ __html: link.label }}
+                                            className={`px-4 py-2 text-sm rounded-md border ${link.active ? 'bg-univrab-blue text-white border-univrab-blue' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+                                        />
+                                    );
+                                })}
                             </div>
                         )}
 

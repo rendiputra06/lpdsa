@@ -101,6 +101,7 @@ export default function Index({ menus }: any) {
                                         <SelectContent>
                                             <SelectItem value="internal">Internal</SelectItem>
                                             <SelectItem value="external">Eksternal</SelectItem>
+                                            <SelectItem value="label">Label (Induk dari Sub-Menu)</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -114,16 +115,34 @@ export default function Index({ menus }: any) {
                                     />
                                 </div>
                             </div>
+                            
                             <div className="space-y-2">
-                                <Label htmlFor="url">URL / Path</Label>
-                                <Input
-                                    id="url"
-                                    value={data.url}
-                                    onChange={e => setData('url', e.target.value)}
-                                    placeholder={data.type === 'internal' ? '/example' : 'https://example.com'}
-                                />
-                                {errors.url && <p className="text-red-500 text-xs">{errors.url}</p>}
+                                <Label>Induk Menu (Opsional)</Label>
+                                <Select value={data.parent_id?.toString() || "none"} onValueChange={(val: string) => setData('parent_id', val === "none" ? null : parseInt(val))}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Sebagai Menu Utama" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">Tidak ada (Sebagai Menu Utama)</SelectItem>
+                                        {menus.filter((m: any) => !editingMenu || m.id !== editingMenu.id).map((m: any) => (
+                                            <SelectItem key={m.id} value={m.id.toString()}>{m.label}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
+
+                            {data.type !== 'label' && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="url">URL / Path</Label>
+                                    <Input
+                                        id="url"
+                                        value={data.url}
+                                        onChange={e => setData('url', e.target.value)}
+                                        placeholder={data.type === 'internal' ? '/example' : 'https://example.com'}
+                                    />
+                                    {errors.url && <p className="text-red-500 text-xs">{errors.url}</p>}
+                                </div>
+                            )}
                             <DialogFooter>
                                 <Button type="submit" disabled={processing} className="bg-univrab-blue">
                                     {editingMenu ? 'Perbarui' : 'Simpan'}
