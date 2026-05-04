@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Banner;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class BannerController extends Controller
@@ -21,12 +22,14 @@ class BannerController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'text' => 'nullable|string',
-            'image' => 'required|image|max:2048',
+            'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'link' => 'nullable|string|max:500',
             'order' => 'required|integer',
             'is_active' => 'required|boolean',
         ]);
 
-        $validated['image'] = $request->file('image')->store('banners', 'public');
+        $validated['image_path'] = $request->file('image')->store('banners', 'public');
+        unset($validated['image']);
 
         Banner::create($validated);
 
@@ -38,14 +41,21 @@ class BannerController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'text' => 'nullable|string',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'link' => 'nullable|string|max:500',
             'order' => 'required|integer',
             'is_active' => 'required|boolean',
         ]);
 
         if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('banners', 'public');
+            // Delete old image if exists
+            if ($banner->image_path && Storage::disk('public')->exists($banner->image_path)) {
+                Storage::disk('public')->delete($banner->image_path);
+            }
+            $validated['image_path'] = $request->file('image')->store('banners', 'public');
         }
+
+        unset($validated['image']);
 
         $banner->update($validated);
 
@@ -54,6 +64,11 @@ class BannerController extends Controller
 
     public function destroy(Banner $banner)
     {
+        // Delete image file if exists
+        if ($banner->image_path && Storage::disk('public')->exists($banner->image_path)) {
+            Storage::disk('public')->delete($banner->image_path);
+        }
+
         $banner->delete();
         return redirect()->back()->with('success', 'Banner berhasil dihapus.');
     }

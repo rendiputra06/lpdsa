@@ -57,17 +57,12 @@ class LandingController extends Controller
         ]);
     }
 
-    public function about()
+    public function showStaticPage($slug)
     {
-        return Inertia::render('static-page', [
-            'page' => \App\Models\StaticPage::where('slug', 'about')->firstOrFail(),
-        ]);
-    }
+        $page = \App\Models\StaticPage::where('slug', $slug)->firstOrFail();
 
-    public function contact()
-    {
         return Inertia::render('static-page', [
-            'page' => \App\Models\StaticPage::where('slug', 'contact')->firstOrFail(),
+            'page' => $page,
         ]);
     }
 }

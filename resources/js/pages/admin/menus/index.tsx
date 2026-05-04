@@ -125,7 +125,12 @@ export default function Index({ menus }: any) {
                                     <SelectContent>
                                         <SelectItem value="none">Tidak ada (Sebagai Menu Utama)</SelectItem>
                                         {menus.filter((m: any) => !editingMenu || m.id !== editingMenu.id).map((m: any) => (
-                                            <SelectItem key={m.id} value={m.id.toString()}>{m.label}</SelectItem>
+                                            <React.Fragment key={m.id}>
+                                                <SelectItem value={m.id.toString()} className="font-bold">{m.label}</SelectItem>
+                                                {m.children?.filter((c: any) => !editingMenu || c.id !== editingMenu.id).map((child: any) => (
+                                                    <SelectItem key={child.id} value={child.id.toString()} className="pl-6 text-slate-500">— {child.label}</SelectItem>
+                                                ))}
+                                            </React.Fragment>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -184,22 +189,42 @@ export default function Index({ menus }: any) {
                                     </TableCell>
                                 </TableRow>
                                 {menu.children?.map((child: any) => (
-                                    <TableRow key={child.id} className="bg-slate-50 dark:bg-neutral-800/50">
-                                        <TableCell className="pl-8">— {child.label}</TableCell>
-                                        <TableCell>{child.type}</TableCell>
-                                        <TableCell>{child.url}</TableCell>
-                                        <TableCell>{child.order}</TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-2">
-                                                <Button variant="ghost" size="icon" onClick={() => openEditDialog(child)}>
-                                                    <Edit className="h-4 w-4" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" className="text-red-500" onClick={() => handleDelete(child.id)}>
-                                                    <Trash className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
+                                    <React.Fragment key={child.id}>
+                                        <TableRow className="bg-slate-50 dark:bg-neutral-800/50">
+                                            <TableCell className="pl-8 font-medium">— {child.label}</TableCell>
+                                            <TableCell>{child.type}</TableCell>
+                                            <TableCell>{child.url}</TableCell>
+                                            <TableCell>{child.order}</TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <Button variant="ghost" size="icon" onClick={() => openEditDialog(child)}>
+                                                        <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" className="text-red-500" onClick={() => handleDelete(child.id)}>
+                                                        <Trash className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                        {child.children?.map((subchild: any) => (
+                                            <TableRow key={subchild.id} className="bg-slate-100 dark:bg-neutral-800/20">
+                                                <TableCell className="pl-14 text-slate-500">―― {subchild.label}</TableCell>
+                                                <TableCell>{subchild.type}</TableCell>
+                                                <TableCell>{subchild.url}</TableCell>
+                                                <TableCell>{subchild.order}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <div className="flex justify-end gap-2">
+                                                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(subchild)}>
+                                                            <Edit className="h-4 w-4" />
+                                                        </Button>
+                                                        <Button variant="ghost" size="icon" className="text-red-500" onClick={() => handleDelete(subchild.id)}>
+                                                            <Trash className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </React.Fragment>
                                 ))}
                             </React.Fragment>
                         ))}

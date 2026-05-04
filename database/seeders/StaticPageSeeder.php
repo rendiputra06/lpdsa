@@ -12,22 +12,63 @@ class StaticPageSeeder extends Seeder
      */
     public function run(): void
     {
-        StaticPage::updateOrCreate(
-            ['slug' => 'about'],
+        $pages = [
             [
                 'title' => 'Tentang LPDSA',
-                'content' => '<h1>Profil LPDSA</h1><p>Lembaga Pangkalan Data, SPMI, dan Akreditasi (LPDSA) Universitas Abdurrab bertugas mengelola data, menjamin mutu internal, dan memfasilitasi akreditasi.</p>',
-                'meta_description' => 'Informasi tentang LPDSA Universitas Abdurrab.',
-            ]
-        );
-
-        StaticPage::updateOrCreate(
-            ['slug' => 'contact'],
+                'slug' => 'about',
+                'type' => 'default',
+                'content' => '<p>Lembaga Pusat Data dan Sistem Informasi (LPDSA) adalah unit kerja di Universitas Abdurrab yang bertanggung jawab dalam pengelolaan infrastruktur IT, pengembangan sistem informasi, dan layanan data terpadu.</p>',
+                'meta_description' => 'Mengenal LPDSA Universitas Abdurrab.',
+                'data' => null,
+            ],
             [
-                'title' => 'Kontak Kami',
-                'content' => '<h1>Kontak</h1><p>Alamat: Jl. Riau Ujung No. 73, Pekanbaru</p><p>Email: lpdsa@univrab.ac.id</p>',
-                'meta_description' => 'Hubungi LPDSA Universitas Abdurrab.',
-            ]
-        );
+                'title' => 'Struktur Organisasi',
+                'slug' => 'struktur-organisasi',
+                'type' => 'org_structure',
+                'content' => null,
+                'meta_description' => 'Struktur Organisasi LPDSA.',
+                'data' => [
+                    [
+                        'name' => 'Dr. H. Nama Lengkap, M.Kom',
+                        'position' => 'Ketua LPDSA',
+                        'level' => '1',
+                        'photo' => null,
+                    ],
+                    [
+                        'name' => 'Nama Sekretaris, S.Kom., M.T',
+                        'position' => 'Sekretaris',
+                        'level' => '2',
+                        'photo' => null,
+                    ]
+                ],
+            ],
+            [
+                'title' => 'Pusat Dokumen',
+                'slug' => 'dokumen',
+                'type' => 'documents',
+                'content' => null,
+                'meta_description' => 'Pusat unduhan dokumen publik LPDSA.',
+                'data' => [
+                    [
+                        'title' => 'Pedoman Akademik 2026',
+                        'description' => 'Buku panduan akademik untuk mahasiswa.',
+                        'file' => null,
+                        'is_external_link' => false,
+                        'url' => '',
+                    ],
+                    [
+                        'title' => 'Portal Sistem Informasi Terpadu',
+                        'description' => 'Link menuju portal utama.',
+                        'file' => null,
+                        'is_external_link' => true,
+                        'url' => 'https://sit.univrab.ac.id',
+                    ]
+                ],
+            ],
+        ];
+
+        foreach ($pages as $page) {
+            StaticPage::updateOrCreate(['slug' => $page['slug']], $page);
+        }
     }
 }

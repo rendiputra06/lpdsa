@@ -17,6 +17,7 @@ export default function Index({ banners }: any) {
         _method: 'POST' as string,
         title: '',
         text: '',
+        link: '',
         image: null as any,
         order: 0,
         is_active: true,
@@ -54,6 +55,7 @@ export default function Index({ banners }: any) {
             _method: 'PUT',
             title: banner.title,
             text: banner.text || '',
+            link: banner.link || '',
             image: null,
             order: banner.order,
             is_active: !!banner.is_active,
@@ -107,6 +109,16 @@ export default function Index({ banners }: any) {
                                     onChange={e => setData('text', e.target.value)}
                                 />
                                 {errors.text && <p className="text-red-500 text-xs">{errors.text}</p>}
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="link">Link URL (Opsional)</Label>
+                                <Input
+                                    id="link"
+                                    value={data.link}
+                                    onChange={e => setData('link', e.target.value)}
+                                    placeholder="https://example.com"
+                                />
+                                {errors.link && <p className="text-red-500 text-xs">{errors.link}</p>}
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
@@ -162,7 +174,7 @@ export default function Index({ banners }: any) {
                             <TableRow key={banner.id}>
                                 <TableCell>
                                     <div className="h-12 w-20 bg-slate-100 rounded overflow-hidden">
-                                        <img src={`/storage/${banner.image}`} alt="" className="h-full w-full object-cover" />
+                                        <img src={`/storage/${banner.image_path}`} alt="" className="h-full w-full object-cover" />
                                     </div>
                                 </TableCell>
                                 <TableCell className="font-medium">{banner.title}</TableCell>

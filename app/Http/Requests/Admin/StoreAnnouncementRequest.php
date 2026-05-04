@@ -11,6 +11,23 @@ class StoreAnnouncementRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('event_detail')) {
+            $eventDetail = $this->input('event_detail', []);
+
+            // Convert empty strings to null for quota
+            if (isset($eventDetail['quota']) && $eventDetail['quota'] === '') {
+                $eventDetail['quota'] = null;
+            }
+
+            // Remove announcement_id if present (security measure)
+            unset($eventDetail['announcement_id']);
+
+            $this->merge(['event_detail' => $eventDetail]);
+        }
+    }
+
     public function rules(): array
     {
         return [
@@ -27,7 +44,11 @@ class StoreAnnouncementRequest extends FormRequest
             'event_detail.location' => 'required_if:type,event|nullable|string|max:255',
             'event_detail.speaker' => 'nullable|string|max:255',
             'event_detail.quota' => 'nullable|integer|min:1',
+            'event_detail.announcement_id' => 'nullable|integer|exists:announcements,id',
             'event_detail.registration_link' => 'nullable|url|max:255',
+            'is_featured' => 'nullable|boolean',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:1000',
             'attachments' => 'nullable|array',
             'attachments.*.id' => 'nullable|integer|exists:announcement_attachments,id',
             'attachments.*.title' => 'required_with:attachments|string|max:255',

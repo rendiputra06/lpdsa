@@ -42,8 +42,9 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'menus' => \App\Models\Menu::with('children')->whereNull('parent_id')->orderBy('order')->get(),
+            'menus' => \App\Models\Menu::with('children.children')->whereNull('parent_id')->orderBy('order')->get(),
             'contactPage' => \App\Models\StaticPage::where('slug', 'contact')->first(),
+            'settings' => \App\Models\Setting::all()->pluck('value', 'key'),
         ];
     }
 }

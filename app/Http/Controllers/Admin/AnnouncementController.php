@@ -106,7 +106,10 @@ class AnnouncementController extends Controller
 
         if ($validated['type'] === 'event') {
             if ($request->validated('event_detail')) {
-                $announcement->eventDetail()->updateOrCreate([], $request->validated('event_detail'));
+                $announcement->eventDetail()->updateOrCreate(
+                    ['announcement_id' => $announcement->id],
+                    $request->validated('event_detail')
+                );
             }
         } else {
             $announcement->eventDetail()->delete();

@@ -12,7 +12,7 @@ class MenuController extends Controller
     public function index()
     {
         return Inertia::render('admin/menus/index', [
-            'menus' => Menu::with('children')->whereNull('parent_id')->orderBy('order')->get(),
+            'menus' => Menu::with('children.children')->whereNull('parent_id')->orderBy('order')->get(),
         ]);
     }
 

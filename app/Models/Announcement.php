@@ -21,11 +21,15 @@ class Announcement extends Model
         'thumbnail',
         'status',
         'type',
+        'is_featured',
         'published_at',
+        'meta_title',
+        'meta_description',
     ];
 
     protected $casts = [
         'published_at' => 'datetime',
+        'is_featured' => 'boolean',
     ];
 
     protected static function booted()

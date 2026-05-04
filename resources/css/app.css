@@ -148,3 +148,52 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* Custom Organization Chart Styles */
+.org-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.org-card {
+    text-align: center;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    border: 1px solid #f1f5f9;
+    transition: transform 0.2s;
+}
+
+.dark .org-card {
+    background: #171717;
+    border-color: #262626;
+}
+
+.org-card:hover {
+    transform: translateY(-5px);
+}
+
+.org-card img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 1rem !important;
+    border: 4px solid #800000;
+}
+
+.org-card h3 {
+    margin: 0.5rem 0 0.25rem 0 !important;
+    font-size: 1.125rem !important;
+    font-weight: 700 !important;
+    color: #800000 !important;
+}
+
+.org-card p {
+    margin: 0 !important;
+    font-size: 0.875rem !important;
+    color: #64748b !important;
+}

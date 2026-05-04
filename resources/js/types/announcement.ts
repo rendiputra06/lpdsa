@@ -54,6 +54,9 @@ export type AnnouncementFormData = {
     status: 'draft' | 'published';
     type: 'regular' | 'event';
     published_at: string;
+    is_featured: boolean;
+    meta_title: string;
+    meta_description: string;
     thumbnail: File | null;
     event_detail: {
         start_at: string;

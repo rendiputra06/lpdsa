@@ -30,9 +30,13 @@
             }
         </style>
 
-        <link rel="icon" href="/favicon.ico" sizes="any">
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        @php
+            $appName = \App\Models\Setting::where('key', 'app_name')->first()?->value ?? config('app.name', 'Laravel');
+            $favicon = \App\Models\Setting::where('key', 'app_favicon')->first()?->value;
+        @endphp
+
+        <link rel="icon" href="{{ $favicon ? asset('storage/' . $favicon) : '/favicon.ico' }}" sizes="any">
+        <link rel="apple-touch-icon" href="{{ $favicon ? asset('storage/' . $favicon) : '/apple-touch-icon.png' }}">
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
@@ -40,7 +44,7 @@
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         <x-inertia::head>
-            <title>{{ config('app.name', 'Laravel') }}</title>
+            <title inertia>{{ $appName }}</title>
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">

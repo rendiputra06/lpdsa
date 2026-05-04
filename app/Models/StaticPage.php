@@ -13,8 +13,14 @@ class StaticPage extends Model
     protected $fillable = [
         'title',
         'slug',
+        'type',
         'content',
+        'data',
         'meta_description',
+    ];
+
+    protected $casts = [
+        'data' => 'array',
     ];
 
     protected static function booted()

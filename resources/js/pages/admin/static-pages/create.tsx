@@ -11,27 +11,33 @@ import { useEffect } from 'react';
 import OrgStructureForm from '@/components/admin/org-structure-form';
 import DocumentsForm from '@/components/admin/documents-form';
 
-export default function Edit({ page }: any) {
+export default function Create() {
     const { data, setData, post, processing, errors } = useForm({
-        _method: 'put',
-        title: page.title,
-        type: page.type || 'default',
-        content: page.content || '',
-        meta_description: page.meta_description || '',
-        data: page.data || [],
-        slug: page.slug,
+        title: '',
+        slug: '',
+        type: 'default',
+        content: '',
+        meta_description: '',
+        data: [] as any[],
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(`/admin/static-pages/${page.id}`, {
+        post('/admin/static-pages', {
             onSuccess: () => {
-                toast.success('Halaman berhasil diperbarui');
+                toast.success('Halaman berhasil dibuat');
             },
         });
     };
 
-    // Initialize data array when type changes if it's empty
+    useEffect(() => {
+        if (data.title && !data.slug) {
+            const s = data.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+            setData('slug', s);
+        }
+    }, [data.title]);
+
+    // Initialize data array when type changes
     useEffect(() => {
         if (data.type === 'org_structure' && (!data.data || data.data.length === 0)) {
             setData('data', [{ name: '', position: '', level: '1', photo: null }]);
@@ -42,14 +48,14 @@ export default function Edit({ page }: any) {
 
     return (
         <>
-            <Head title={`Edit ${page.title}`} />
+            <Head title="Buat Halaman Baru" />
 
             <div className="max-w-5xl mx-auto space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Edit Halaman Statis</h1>
+                        <h1 className="text-2xl font-bold tracking-tight">Buat Halaman Baru</h1>
                         <p className="text-muted-foreground text-sm mt-1">
-                            Perbarui konten untuk halaman &middot; <span className="font-medium">{page.title}</span>
+                            Tambahkan halaman statis baru ke website LPDSA.
                         </p>
                     </div>
                     <Button variant="outline" asChild>
@@ -76,6 +82,7 @@ export default function Edit({ page }: any) {
                                         id="title"
                                         value={data.title}
                                         onChange={e => setData('title', e.target.value)}
+                                        placeholder="Contoh: Struktur Organisasi"
                                         className={`text-lg font-medium ${errors.title ? 'border-red-500' : ''}`}
                                     />
                                     {errors.title && <p className="text-red-500 text-xs">{errors.title}</p>}
@@ -155,7 +162,7 @@ export default function Edit({ page }: any) {
                                     <Globe className="h-5 w-5 text-univrab-blue" />
                                     SEO & Navigasi
                                 </CardTitle>
-                                <CardDescription>Optimasi halaman untuk mesin pencari.</CardDescription>
+                                <CardDescription>Atur alamat URL dan optimasi pencarian.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
@@ -167,10 +174,12 @@ export default function Edit({ page }: any) {
                                             value={data.slug}
                                             onChange={e => setData('slug', e.target.value)}
                                             className={`rounded-l-none ${errors.slug ? 'border-red-500' : ''}`}
+                                            placeholder="struktur-organisasi"
                                         />
                                     </div>
                                     {errors.slug && <p className="text-red-500 text-xs">{errors.slug}</p>}
                                 </div>
+
                                 <div className="space-y-2">
                                     <Label htmlFor="meta_description">Meta Description</Label>
                                     <textarea
@@ -183,20 +192,13 @@ export default function Edit({ page }: any) {
                                     />
                                     {errors.meta_description && <p className="text-red-500 text-xs">{errors.meta_description}</p>}
                                 </div>
-                                
-                                <div className="pt-2">
-                                    <div className="p-3 bg-slate-50 dark:bg-neutral-900 rounded-md border border-dashed border-slate-200 dark:border-neutral-800">
-                                        <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Preview URL</p>
-                                        <a href={`/${page.slug}`} target="_blank" className="text-sm font-mono text-univrab-blue truncate hover:underline block">/{page.slug}</a>
-                                    </div>
-                                </div>
                             </CardContent>
                         </Card>
 
                         <div className="sticky bottom-6">
                             <Button type="submit" disabled={processing} className="w-full bg-univrab-blue hover:bg-univrab-blue/90 h-12 shadow-lg transition-all">
                                 <Save className="h-4 w-4 mr-2" />
-                                {processing ? 'Menyimpan...' : 'Simpan Perubahan'}
+                                {processing ? 'Menyimpan...' : 'Simpan Halaman'}
                             </Button>
                         </div>
                     </div>
@@ -206,11 +208,10 @@ export default function Edit({ page }: any) {
     );
 }
 
-Edit.layout = {
+Create.layout = {
     breadcrumbs: [
         { title: 'Dashboard', href: '/dashboard' },
         { title: 'Halaman Statis', href: '/admin/static-pages' },
-        { title: 'Edit Konten', href: '#' },
+        { title: 'Buat Baru', href: '#' },
     ],
 };
-

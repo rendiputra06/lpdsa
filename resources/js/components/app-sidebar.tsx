@@ -8,7 +8,8 @@ import {
     FileText,
     Image as ImageIcon,
     History,
-    Globe
+    Globe,
+    Settings
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -66,6 +67,11 @@ const mainNavItems: NavItem[] = [
         title: 'Log Aktivitas',
         href: '/admin/activity-logs',
         icon: History,
+    },
+    {
+        title: 'Pengaturan',
+        href: '/admin/settings',
+        icon: Settings,
     },
 ];
 
