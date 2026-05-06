@@ -35,7 +35,7 @@ export type AnnouncementDetail = {
         id: number;
         name: string;
     };
-    eventDetail?: AnnouncementEventDetail;
+    event_detail?: AnnouncementEventDetail;
     attachments?: AttachmentItem[];
 };
 

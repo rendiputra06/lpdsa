@@ -16,7 +16,6 @@ export default function Edit({ announcement, categories }: EditProps) {
         const pad = (n: number) => n.toString().padStart(2, '0');
         return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
     };
-
     return (
         <>
             <Head title="Edit Pengumuman" />
@@ -47,14 +46,14 @@ export default function Edit({ announcement, categories }: EditProps) {
                         type: announcement.type,
                         published_at: formatDatetimeLocal(announcement.published_at),
                         thumbnail: null,
-                        event_detail: announcement.eventDetail
+                        event_detail: announcement.event_detail
                             ? {
-                                start_at: formatDatetimeLocal(announcement.eventDetail.start_at),
-                                end_at: formatDatetimeLocal(announcement.eventDetail.end_at),
-                                location: announcement.eventDetail.location,
-                                speaker: announcement.eventDetail.speaker || '',
-                                quota: announcement.eventDetail.quota?.toString() || '',
-                                registration_link: announcement.eventDetail.registration_link || '',
+                                start_at: formatDatetimeLocal(announcement.event_detail.start_at),
+                                end_at: formatDatetimeLocal(announcement.event_detail.end_at),
+                                location: announcement.event_detail.location,
+                                speaker: announcement.event_detail.speaker || '',
+                                quota: announcement.event_detail.quota?.toString() || '',
+                                registration_link: announcement.event_detail.registration_link || '',
                             }
                             : {
                                 start_at: '',

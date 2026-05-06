@@ -58,7 +58,7 @@ class Announcement extends Model
 
     public function eventDetail()
     {
-        return $this->hasOne(EventDetail::class);
+        return $this->hasOne(EventDetail::class, 'announcement_id', 'id');
     }
 
     public function scopePublished($query)

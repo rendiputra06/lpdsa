@@ -141,7 +141,7 @@ export default function Show({ announcement }: ShowProps) {
                                 </div>
                             </div>
 
-                            {announcement.type === 'event' && announcement.eventDetail && (
+                            {announcement.type === 'event' && announcement.event_detail && (
                                 <div>
                                     <h3 className="font-semibold mb-2 flex items-center gap-2">
                                         <Calendar className="h-5 w-5" />
@@ -150,39 +150,39 @@ export default function Show({ announcement }: ShowProps) {
                                     <div className="space-y-2 text-sm">
                                         <div className="flex justify-between">
                                             <span className="text-muted-foreground">Waktu Mulai:</span>
-                                            <span>{formatEventDate(announcement.eventDetail.start_at)}</span>
+                                            <span>{formatEventDate(announcement.event_detail.start_at)}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-muted-foreground">Waktu Selesai:</span>
-                                            <span>{formatEventDate(announcement.eventDetail.end_at)}</span>
+                                            <span>{formatEventDate(announcement.event_detail.end_at)}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-muted-foreground">Lokasi:</span>
                                             <span className="flex items-center gap-1">
                                                 <MapPin className="h-3 w-3" />
-                                                {announcement.eventDetail.location}
+                                                {announcement.event_detail.location}
                                             </span>
                                         </div>
-                                        {announcement.eventDetail.speaker && (
+                                        {announcement.event_detail.speaker && (
                                             <div className="flex justify-between">
                                                 <span className="text-muted-foreground">Speaker:</span>
-                                                <span>{announcement.eventDetail.speaker}</span>
+                                                <span>{announcement.event_detail.speaker}</span>
                                             </div>
                                         )}
-                                        {announcement.eventDetail.quota && (
+                                        {announcement.event_detail.quota && (
                                             <div className="flex justify-between">
                                                 <span className="text-muted-foreground">Kuota:</span>
                                                 <span className="flex items-center gap-1">
                                                     <Users className="h-3 w-3" />
-                                                    {announcement.eventDetail.quota} peserta
+                                                    {announcement.event_detail.quota} peserta
                                                 </span>
                                             </div>
                                         )}
-                                        {announcement.eventDetail.registration_link && (
+                                        {announcement.event_detail.registration_link && (
                                             <div className="flex justify-between">
                                                 <span className="text-muted-foreground">Link Pendaftaran:</span>
                                                 <a
-                                                    href={announcement.eventDetail.registration_link}
+                                                    href={announcement.event_detail.registration_link}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="text-blue-500 hover:underline flex items-center gap-1"

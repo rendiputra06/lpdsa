@@ -61,7 +61,6 @@ export default function AnnouncementForm({
         attachments: initialData?.attachments ?? [],
         attachments_deleted: [],
     });
-
     // Transform data before submission to fix type conversions
     transform((formData) => {
         const transformed = { ...formData };

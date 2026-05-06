@@ -14,11 +14,6 @@ class LandingController extends Controller
     {
         return Inertia::render('welcome', [
             'banners' => Banner::active()->get(),
-            'latestAnnouncements' => Announcement::with('category')
-                ->published()
-                ->latest('published_at')
-                ->take(6)
-                ->get(),
         ]);
     }
 
