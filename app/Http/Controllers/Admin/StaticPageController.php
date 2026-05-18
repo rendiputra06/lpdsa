@@ -72,25 +72,27 @@ class StaticPageController extends Controller
 
     private function processDataFiles(Request $request, array $data, array $oldData = [])
     {
-        if ($request->hasFile('data')) {
-            $files = $request->file('data');
-            foreach ($files as $index => $fileItem) {
-                if (isset($fileItem['photo']) && $fileItem['photo'] instanceof \Illuminate\Http\UploadedFile) {
-                    $data[$index]['photo'] = $fileItem['photo']->store('static_pages', 'public');
-                }
-                if (isset($fileItem['file']) && $fileItem['file'] instanceof \Illuminate\Http\UploadedFile) {
-                    $data[$index]['file'] = $fileItem['file']->store('static_pages', 'public');
-                }
-            }
-        }
-
-        // Preserve old file paths if they weren't updated
         foreach ($data as $index => &$item) {
-            if (isset($item['photo']) && $item['photo'] === null && isset($oldData[$index]['photo'])) {
-                $item['photo'] = $oldData[$index]['photo'];
+            // Process photo for org_structure
+            if ($request->hasFile("data.{$index}.photo")) {
+                $item['photo'] = $request->file("data.{$index}.photo")->store('static_pages', 'public');
+            } else {
+                // Keep the existing photo if it's already a string path (unchanged)
+                // If it is explicitly deleted or empty, set to null
+                if (!isset($item['photo']) || $item['photo'] === 'null' || $item['photo'] === '') {
+                    $item['photo'] = null;
+                }
             }
-            if (isset($item['file']) && $item['file'] === null && isset($oldData[$index]['file'])) {
-                $item['file'] = $oldData[$index]['file'];
+
+            // Process file for documents
+            if ($request->hasFile("data.{$index}.file")) {
+                $item['file'] = $request->file("data.{$index}.file")->store('static_pages', 'public');
+            } else {
+                // Keep the existing file if it's already a string path (unchanged)
+                // If it is explicitly deleted or empty, set to null
+                if (!isset($item['file']) || $item['file'] === 'null' || $item['file'] === '') {
+                    $item['file'] = null;
+                }
             }
         }
 

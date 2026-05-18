@@ -60,7 +60,7 @@ export default function Footer() {
                 <div className="mt-12 border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs">
                     <p>&copy; {new Date().getFullYear()} LPDSA Universitas Abdurrab. All rights reserved.</p>
                     <div className="flex space-x-6 mt-4 md:mt-0">
-                        <a href="https://univrab.ac.id" className="hover:text-white transition-colors">Official Website</a>
+                        <a href="https://univrab.ac.id" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Official Website</a>
                     </div>
                 </div>
             </div>

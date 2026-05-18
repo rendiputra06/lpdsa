@@ -2,12 +2,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Trash2, Plus, GripVertical, Upload, X, User } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { Trash2, Plus, GripVertical, Upload, X } from 'lucide-react';
+import { useRef } from 'react';
 
 export default function OrgStructureForm({ data, onChange }: { data: any[], onChange: (data: any[]) => void }) {
-    const [previewImages, setPreviewImages] = useState<{[key: string]: string}>({});
     const fileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
+    
     const handleAdd = () => {
         onChange([...(data || []), { name: '', position: '', level: '1', photo: null }]);
     };
@@ -25,27 +25,7 @@ export default function OrgStructureForm({ data, onChange }: { data: any[], onCh
     };
 
     const handlePhotoChange = (index: number, file: File | null) => {
-        const key = `photo-${index}`;
-        
-        if (file) {
-            // Create preview
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                setPreviewImages(prev => ({ ...prev, [key]: e.target?.result as string }));
-            };
-            reader.readAsDataURL(file);
-            
-            // Update data
-            handleChange(index, 'photo', file);
-        } else {
-            // Clear preview and data
-            setPreviewImages(prev => {
-                const newPreviews = { ...prev };
-                delete newPreviews[key];
-                return newPreviews;
-            });
-            handleChange(index, 'photo', null);
-        }
+        handleChange(index, 'photo', file);
     };
 
     const handleRemovePhoto = (index: number) => {
@@ -57,19 +37,13 @@ export default function OrgStructureForm({ data, onChange }: { data: any[], onCh
         }
     };
 
-    const getPhotoDisplay = (item: any, index: number) => {
-        const key = `photo-${index}`;
-        
-        // Show preview if exists
-        if (previewImages[key]) {
-            return previewImages[key];
+    const getPhotoDisplay = (item: any) => {
+        if (item.photo instanceof File) {
+            return URL.createObjectURL(item.photo);
         }
-        
-        // Show existing photo if string
         if (typeof item.photo === 'string' && item.photo) {
             return `/storage/${item.photo}`;
         }
-        
         return null;
     };
 
@@ -112,10 +86,10 @@ export default function OrgStructureForm({ data, onChange }: { data: any[], onCh
                                 <CardContent className="p-4">
                                     {/* Photo Preview Area */}
                                     <div className="relative group">
-                                        {getPhotoDisplay(item, index) ? (
+                                        {getPhotoDisplay(item) ? (
                                             <div className="relative">
                                                 <img 
-                                                    src={getPhotoDisplay(item, index) || ''} 
+                                                    src={getPhotoDisplay(item) || ''} 
                                                     alt={`Preview ${item.name || 'Photo'}`}
                                                     className="h-32 w-32 mx-auto rounded-full object-cover border-4 border-univrab-blue/10"
                                                 />
@@ -157,7 +131,7 @@ export default function OrgStructureForm({ data, onChange }: { data: any[], onCh
                                             className="text-xs"
                                         >
                                             <Upload className="h-3 w-3 mr-1" />
-                                            {getPhotoDisplay(item, index) ? 'Ganti Foto' : 'Pilih Foto'}
+                                            {getPhotoDisplay(item) ? 'Ganti Foto' : 'Pilih Foto'}
                                         </Button>
                                     </div>
                                     

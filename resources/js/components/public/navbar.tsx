@@ -39,6 +39,15 @@ export default function Navbar() {
                                 ) : (
                                     menu.type === 'label' ? (
                                         <span className="cursor-default rounded-md px-3 py-2 text-sm font-medium text-slate-600">{menu.label}</span>
+                                    ) : menu.type === 'external' ? (
+                                        <a
+                                            href={menu.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-univrab-blue dark:text-neutral-400 dark:hover:bg-neutral-900 dark:hover:text-univrab-gold transition-colors"
+                                        >
+                                            {menu.label}
+                                        </a>
                                     ) : (
                                         <Link
                                             href={menu.url}
@@ -62,6 +71,10 @@ export default function Navbar() {
                                                                 <div className="font-bold text-sm text-slate-900 dark:text-white mb-3 border-b border-slate-100 dark:border-neutral-800 pb-2 uppercase tracking-wider">
                                                                     {child.label}
                                                                 </div>
+                                                            ) : child.type === 'external' ? (
+                                                                <a href={child.url} target="_blank" rel="noopener noreferrer" className="font-bold text-sm text-univrab-blue dark:text-univrab-gold hover:underline mb-3 border-b border-slate-100 dark:border-neutral-800 pb-2 uppercase tracking-wider block">
+                                                                    {child.label}
+                                                                </a>
                                                             ) : (
                                                                 <Link href={child.url} className="font-bold text-sm text-univrab-blue dark:text-univrab-gold hover:underline mb-3 border-b border-slate-100 dark:border-neutral-800 pb-2 uppercase tracking-wider block">
                                                                     {child.label}
@@ -71,9 +84,15 @@ export default function Navbar() {
                                                             {hasSubChildren && (
                                                                 <div className="flex flex-col gap-1.5 mt-1">
                                                                     {child.children.map((sub: any) => (
-                                                                        <Link key={sub.id} href={sub.url} className="text-sm text-slate-600 hover:text-univrab-blue dark:text-neutral-400 dark:hover:text-univrab-gold py-1 transition-colors">
-                                                                            {sub.label}
-                                                                        </Link>
+                                                                        sub.type === 'external' ? (
+                                                                            <a key={sub.id} href={sub.url} target="_blank" rel="noopener noreferrer" className="text-sm text-slate-600 hover:text-univrab-blue dark:text-neutral-400 dark:hover:bg-neutral-900 dark:hover:text-univrab-gold py-1 transition-colors">
+                                                                                {sub.label}
+                                                                            </a>
+                                                                        ) : (
+                                                                            <Link key={sub.id} href={sub.url} className="text-sm text-slate-600 hover:text-univrab-blue dark:text-neutral-400 dark:hover:bg-neutral-900 dark:hover:text-univrab-gold py-1 transition-colors">
+                                                                                {sub.label}
+                                                                            </Link>
+                                                                        )
                                                                     ))}
                                                                 </div>
                                                             )}
@@ -86,6 +105,16 @@ export default function Navbar() {
                                                     <div key={child.id} className="block px-4 py-2 text-sm text-slate-900 dark:text-white font-bold border-b border-slate-100 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-950/50 cursor-default">
                                                         {child.label}
                                                     </div>
+                                                ) : child.type === 'external' ? (
+                                                    <a
+                                                        key={child.id}
+                                                        href={child.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="block px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-univrab-blue dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-univrab-gold transition-colors"
+                                                    >
+                                                        {child.label}
+                                                    </a>
                                                 ) : (
                                                     <Link
                                                         key={child.id}
@@ -152,6 +181,15 @@ export default function Navbar() {
                                                         <div className="block rounded-md px-3 py-2 mt-2 text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider cursor-default">
                                                             {child.label}
                                                         </div>
+                                                    ) : child.type === 'external' ? (
+                                                        <a
+                                                            href={child.url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className={`block rounded-md px-3 py-2 text-sm font-medium hover:bg-slate-100 hover:text-univrab-blue dark:hover:bg-neutral-900 dark:hover:text-univrab-gold ${child.children && child.children.length > 0 ? 'text-slate-900 dark:text-white font-bold uppercase tracking-wider mt-2' : 'text-slate-600 dark:text-neutral-400'}`}
+                                                        >
+                                                            {child.label}
+                                                        </a>
                                                     ) : (
                                                         <Link
                                                             href={child.url}
@@ -164,13 +202,25 @@ export default function Navbar() {
                                                     {child.children && child.children.length > 0 && (
                                                         <div className="pl-4 pb-2 border-l-2 border-slate-100 dark:border-neutral-800 ml-3">
                                                             {child.children.map((sub: any) => (
-                                                                <Link
-                                                                    key={sub.id}
-                                                                    href={sub.url}
-                                                                    className="block rounded-md px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-univrab-blue dark:text-neutral-500 dark:hover:bg-neutral-900 dark:hover:text-univrab-gold"
-                                                                >
-                                                                    {sub.label}
-                                                                </Link>
+                                                                sub.type === 'external' ? (
+                                                                    <a
+                                                                        key={sub.id}
+                                                                        href={sub.url}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="block rounded-md px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-univrab-blue dark:text-neutral-500 dark:hover:bg-neutral-900 dark:hover:text-univrab-gold"
+                                                                    >
+                                                                        {sub.label}
+                                                                    </a>
+                                                                ) : (
+                                                                    <Link
+                                                                        key={sub.id}
+                                                                        href={sub.url}
+                                                                        className="block rounded-md px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-univrab-blue dark:text-neutral-500 dark:hover:bg-neutral-900 dark:hover:text-univrab-gold"
+                                                                    >
+                                                                        {sub.label}
+                                                                    </Link>
+                                                                )
                                                             ))}
                                                         </div>
                                                     )}
@@ -183,6 +233,15 @@ export default function Navbar() {
                                         <div className="block rounded-md px-3 py-2 text-base font-medium text-slate-500 cursor-default">
                                             {menu.label}
                                         </div>
+                                    ) : menu.type === 'external' ? (
+                                        <a
+                                            href={menu.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="block rounded-md px-3 py-2 text-base font-medium text-slate-600 hover:bg-slate-100 hover:text-univrab-blue dark:text-neutral-400 dark:hover:bg-neutral-900 dark:hover:text-univrab-gold"
+                                        >
+                                            {menu.label}
+                                        </a>
                                     ) : (
                                         <Link
                                             href={menu.url}

@@ -14,7 +14,7 @@ export default function Index({ menus }: any) {
 
     const { data, setData, post, put, delete: destroy, processing, reset, errors } = useForm({
         label: '',
-        type: 'internal' as 'internal' | 'external',
+        type: 'internal' as 'internal' | 'external' | 'label',
         url: '',
         order: 0,
         parent_id: null as number | null,
