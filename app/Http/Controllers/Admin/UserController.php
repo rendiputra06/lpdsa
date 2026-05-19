@@ -43,6 +43,10 @@ class UserController extends Controller
             'password' => ['nullable', Password::defaults()],
         ]);
 
+        if ($user->id === auth()->id() && $validated['role'] !== $user->role) {
+            return redirect()->back()->withErrors(['role' => 'Anda tidak diperbolehkan mengubah peran Anda sendiri.']);
+        }
+
         if (!empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
