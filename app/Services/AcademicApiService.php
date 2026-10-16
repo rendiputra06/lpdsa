@@ -65,7 +65,11 @@ class AcademicApiService
     }
 
     /**
-     * Sync academic units from external API or fallback dataset
+     * Sync academic units from external API or fallback dataset.
+     * Guarantees that the data source is the single source of truth:
+     * - New units in API are added
+     * - Existing units are updated
+     * - Units no longer present in API are pruned/deleted
      */
     public function syncUnits(): array
     {
@@ -73,14 +77,22 @@ class AcademicApiService
         $apiToken = Setting::where('key', 'academic_api_token')->value('value');
 
         $isLiveApi = false;
-        $syncedCount = 0;
+        $syncResult = [
+            'synced_count' => 0,
+            'deleted_count' => 0,
+        ];
 
         if (!empty($apiUrl)) {
+            $endpoint = rtrim($apiUrl, '/');
+            if (!str_contains($endpoint, '/study-programs') && !str_contains($endpoint, '/academic-units')) {
+                $endpoint .= '/study-programs';
+            }
+
             try {
                 $response = Http::withToken($apiToken ?: '')
-                    ->timeout(10)
+                    ->timeout(12)
                     ->acceptJson()
-                    ->get($apiUrl . '/study-programs');
+                    ->get($endpoint);
 
                 if ($response->successful()) {
                     $json = $response->json();
@@ -88,7 +100,7 @@ class AcademicApiService
 
                     if (is_array($data) && count($data) > 0) {
                         $isLiveApi = true;
-                        $syncedCount = $this->importFromApiResponse($data);
+                        $syncResult = $this->importFromApiResponse($data);
                     }
                 }
             } catch (\Exception $e) {
@@ -98,26 +110,35 @@ class AcademicApiService
 
         // If live API was not used or returned no items, use default Univrab structure
         if (!$isLiveApi) {
-            $syncedCount = $this->importFromDefaultDataset();
+            $syncResult = $this->importFromDefaultDataset();
+        }
+
+        $syncedCount = $syncResult['synced_count'];
+        $deletedCount = $syncResult['deleted_count'];
+
+        $sourceLabel = $isLiveApi ? 'API eksternal' : 'dataset standar Univrab';
+        $message = "Sinkronisasi berhasil ({$sourceLabel}): {$syncedCount} unit akademik aktif diperbarui.";
+        if ($deletedCount > 0) {
+            $message .= " {$deletedCount} unit akademik yang tidak terdaftar di sumber telah dihapus.";
         }
 
         return [
             'success' => true,
             'is_live_api' => $isLiveApi,
             'synced_count' => $syncedCount,
-            'message' => $isLiveApi
-                ? "Berhasil menyinkronkan {$syncedCount} unit akademik dari API eksternal."
-                : "Berhasil menyinkronkan {$syncedCount} unit akademik Universitas Abdurrab (dataset standar).",
+            'deleted_count' => $deletedCount,
+            'message' => $message,
         ];
     }
 
     /**
-     * Import structured API data from study-programs endpoint
+     * Import structured API data with full two-way reconciliation.
+     * Supports both flat structure (code, name, level, faculty_name) and nested (fakultas: {kode, nama}).
      */
-    protected function importFromApiResponse(array $items): int
+    protected function importFromApiResponse(array $items): array
     {
         $now = now();
-        $count = 0;
+        $processedIds = [];
 
         // Ensure University record exists
         $univ = AcademicUnit::updateOrCreate(
@@ -129,68 +150,107 @@ class AcademicApiService
                 'synced_at' => $now,
             ]
         );
-        $count++;
+        $processedIds[] = $univ->id;
 
         $faculties = [];
 
         foreach ($items as $item) {
-            $facultyData = $item['fakultas'] ?? null;
-            $facultyId = null;
-            $facultyName = null;
+            $type = $item['type'] ?? 'study_program';
 
-            if ($facultyData && is_array($facultyData)) {
-                $facCode = $facultyData['kode_fakultas'] ?? ($facultyData['code'] ?? null);
-                $facName = $facultyData['nama_fakultas'] ?? ($facultyData['name'] ?? 'Fakultas');
+            // If item is university itself
+            if ($type === 'university') {
+                $univ->update([
+                    'code' => $item['code'] ?? $univ->code,
+                    'name' => $item['name'] ?? $univ->name,
+                    'synced_at' => $now,
+                ]);
+                continue;
+            }
 
-                if (!isset($faculties[$facCode])) {
+            // If item is a standalone faculty definition
+            if ($type === 'faculty') {
+                $facCode = $item['code'] ?? ($item['kode_fakultas'] ?? null);
+                $facName = $item['name'] ?? ($item['nama_fakultas'] ?? 'Fakultas');
+
+                if ($facCode || $facName) {
                     $faculty = AcademicUnit::updateOrCreate(
                         ['type' => 'faculty', 'code' => $facCode],
                         [
                             'name' => $facName,
                             'parent_id' => $univ->id,
+                            'is_active' => $item['is_active'] ?? true,
+                            'synced_at' => $now,
+                        ]
+                    );
+                    $key = $facCode ?: $facName;
+                    $faculties[$key] = $faculty;
+                    $processedIds[] = $faculty->id;
+                }
+                continue;
+            }
+
+            // Study program handling
+            $facultyData = $item['fakultas'] ?? null;
+            $facCode = $item['faculty_code'] ?? ($facultyData['kode_fakultas'] ?? ($facultyData['code'] ?? null));
+            $facName = $item['faculty_name'] ?? ($facultyData['nama_fakultas'] ?? ($facultyData['name'] ?? null));
+
+            $facultyId = null;
+            if ($facCode || $facName) {
+                $key = $facCode ?: $facName;
+                if (!isset($faculties[$key])) {
+                    $faculty = AcademicUnit::updateOrCreate(
+                        ['type' => 'faculty', 'code' => $facCode],
+                        [
+                            'name' => $facName ?: ('Fakultas ' . $facCode),
+                            'parent_id' => $univ->id,
                             'is_active' => true,
                             'synced_at' => $now,
                         ]
                     );
-                    $faculties[$facCode] = $faculty;
-                    $count++;
+                    $faculties[$key] = $faculty;
                 }
-
-                $facultyId = $faculties[$facCode]->id;
-                $facultyName = $facName;
+                $facultyId = $faculties[$key]->id;
+                $processedIds[] = $facultyId;
             }
 
             $prodiCode = $item['kode_prodi'] ?? ($item['code'] ?? null);
             $prodiName = $item['nama_prodi'] ?? ($item['name'] ?? null);
             $level = $item['jenjang'] ?? ($item['level'] ?? 'S1');
+            $isActive = $item['is_active'] ?? true;
 
             if ($prodiName) {
-                AcademicUnit::updateOrCreate(
+                $prodi = AcademicUnit::updateOrCreate(
                     ['type' => 'study_program', 'code' => $prodiCode],
                     [
                         'name' => $prodiName,
                         'level' => strtoupper(trim($level)),
-                        'faculty_name' => $facultyName,
+                        'faculty_name' => $facName,
                         'parent_id' => $facultyId,
-                        'is_active' => true,
+                        'is_active' => (bool) $isActive,
                         'synced_at' => $now,
                     ]
                 );
-                $count++;
+                $processedIds[] = $prodi->id;
             }
         }
 
-        return $count;
+        $processedIds = array_values(array_unique($processedIds));
+        $deletedCount = $this->pruneObsoleteUnits($processedIds);
+
+        return [
+            'synced_count' => count($processedIds),
+            'deleted_count' => $deletedCount,
+        ];
     }
 
     /**
-     * Import default Univrab dataset
+     * Import default Univrab dataset with full two-way reconciliation.
      */
-    protected function importFromDefaultDataset(): int
+    protected function importFromDefaultDataset(): array
     {
         $dataset = $this->getDefaultUnivrabUnits();
         $now = now();
-        $count = 0;
+        $processedIds = [];
 
         // University
         $univ = AcademicUnit::updateOrCreate(
@@ -202,7 +262,7 @@ class AcademicApiService
                 'synced_at' => $now,
             ]
         );
-        $count++;
+        $processedIds[] = $univ->id;
 
         // Faculties & Study Programs
         foreach ($dataset['faculties'] as $fac) {
@@ -215,10 +275,10 @@ class AcademicApiService
                     'synced_at' => $now,
                 ]
             );
-            $count++;
+            $processedIds[] = $faculty->id;
 
             foreach ($fac['programs'] as $prog) {
-                AcademicUnit::updateOrCreate(
+                $program = AcademicUnit::updateOrCreate(
                     ['type' => 'study_program', 'code' => $prog['code']],
                     [
                         'name' => $prog['name'],
@@ -229,10 +289,46 @@ class AcademicApiService
                         'synced_at' => $now,
                     ]
                 );
-                $count++;
+                $processedIds[] = $program->id;
             }
         }
 
-        return $count;
+        $processedIds = array_values(array_unique($processedIds));
+        $deletedCount = $this->pruneObsoleteUnits($processedIds);
+
+        return [
+            'synced_count' => count($processedIds),
+            'deleted_count' => $deletedCount,
+        ];
+    }
+
+    /**
+     * Delete any academic units that are not present in the synced payload.
+     * Deletes study programs first, then faculties, then university,
+     * maintaining foreign key integrity.
+     */
+    protected function pruneObsoleteUnits(array $syncedIds): int
+    {
+        $toDeleteCount = AcademicUnit::whereNotIn('id', $syncedIds)->count();
+
+        if ($toDeleteCount === 0) {
+            return 0;
+        }
+
+        // 1. Delete study programs not in synced IDs
+        AcademicUnit::whereNotIn('id', $syncedIds)
+            ->where('type', 'study_program')
+            ->delete();
+
+        // 2. Delete faculties not in synced IDs
+        AcademicUnit::whereNotIn('id', $syncedIds)
+            ->where('type', 'faculty')
+            ->delete();
+
+        // 3. Delete any remaining unlisted units
+        AcademicUnit::whereNotIn('id', $syncedIds)
+            ->delete();
+
+        return $toDeleteCount;
     }
 }

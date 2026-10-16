@@ -18,11 +18,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::resource('announcements', \App\Http\Controllers\Admin\AnnouncementController::class);
         Route::resource('categories', \App\Http\Controllers\Admin\CategoryController::class)->except(['create', 'edit', 'show']);
+        Route::post('menus/{menu}/move', [\App\Http\Controllers\Admin\MenuController::class, 'move'])->name('menus.move');
         Route::resource('menus', \App\Http\Controllers\Admin\MenuController::class)->except(['create', 'edit', 'show']);
         Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['create', 'edit', 'show']);
-        Route::resource('static-pages', \App\Http\Controllers\Admin\StaticPageController::class);
         Route::resource('banners', \App\Http\Controllers\Admin\BannerController::class)->except(['create', 'edit', 'show']);
-        Route::post('accreditations/sync', [\App\Http\Controllers\Admin\AccreditationController::class, 'syncFromApi'])->name('accreditations.sync');
+        Route::resource('static-pages', \App\Http\Controllers\Admin\StaticPageController::class);
+        Route::post('academic-units/sync', [\App\Http\Controllers\Admin\AcademicUnitController::class, 'syncFromApi'])->name('academic-units.sync');
+        Route::patch('academic-units/{academicUnit}/toggle-status', [\App\Http\Controllers\Admin\AcademicUnitController::class, 'toggleStatus'])->name('academic-units.toggle-status');
+        Route::resource('academic-units', \App\Http\Controllers\Admin\AcademicUnitController::class)->except(['create', 'edit', 'show']);
+        Route::post('accreditations/sync', [\App\Http\Controllers\Admin\AcademicUnitController::class, 'syncFromApi'])->name('accreditations.sync');
         Route::resource('accreditations', \App\Http\Controllers\Admin\AccreditationController::class)->except(['create', 'edit', 'show']);
         Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
         Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');

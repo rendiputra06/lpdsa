@@ -10,7 +10,8 @@ import {
     History,
     Globe,
     Settings,
-    Award
+    Award,
+    GraduationCap,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -48,6 +49,11 @@ const mainNavItems: NavItem[] = [
         title: 'Data Akreditasi',
         href: '/admin/accreditations',
         icon: Award,
+    },
+    {
+        title: 'Unit Akademik',
+        href: '/admin/academic-units',
+        icon: GraduationCap,
     },
     {
         title: 'Menu Navigasi',

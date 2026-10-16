@@ -13,8 +13,12 @@ export interface AcademicUnit {
     faculty_name: string | null;
     parent_id: number | null;
     is_active: boolean;
+    synced_at?: string | null;
     created_at?: string;
     updated_at?: string;
+    parent?: AcademicUnit | null;
+    children?: AcademicUnit[];
+    latest_accreditation?: Accreditation | null;
 }
 
 export interface Accreditation {

@@ -108,7 +108,6 @@ const COMMON_GRADES = [
 export default function Index({ accreditations, stats, academicUnits, filters }: Props) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<Accreditation | null>(null);
-    const [isSyncing, setIsSyncing] = useState(false);
     const [selectedUnitId, setSelectedUnitId] = useState<string>('custom');
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -161,15 +160,6 @@ export default function Index({ accreditations, stats, academicUnits, filters }:
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         handleFilterChange('search', searchQuery);
-    };
-
-    const handleSync = () => {
-        if (confirm('Sinkronisasi akan memperbarui master data Universitas, Fakultas, dan Prodi dari sistem akademik. Lanjutkan?')) {
-            setIsSyncing(true);
-            router.post('/admin/accreditations/sync', {}, {
-                onFinish: () => setIsSyncing(false),
-            });
-        }
     };
 
     const handleUnitSelect = (unitIdStr: string) => {
@@ -347,13 +337,13 @@ export default function Index({ accreditations, stats, academicUnits, filters }:
                 <div className="flex items-center gap-2">
                     <Button
                         variant="outline"
-                        onClick={handleSync}
-                        disabled={isSyncing}
+                        asChild
                         className="gap-2 border-slate-300 dark:border-slate-700"
-                        title="Sinkronisasi master data Prodi & Fakultas dari sistem akademik sebelah"
                     >
-                        <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin text-[#8B142C]' : ''}`} />
-                        {isSyncing ? 'Menyinkronkan...' : 'Sinkronisasi dari API'}
+                        <Link href="/admin/academic-units">
+                            <GraduationCap className="h-4 w-4 text-[#8B142C] dark:text-red-400" />
+                            <span>Data Unit Akademik</span>
+                        </Link>
                     </Button>
                     <Button
                         onClick={openCreateDialog}

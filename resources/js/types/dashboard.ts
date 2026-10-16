@@ -26,13 +26,23 @@ export interface ActivityLog {
 
 export interface DashboardStats {
     totalAnnouncements: number;
+    publishedAnnouncements?: number;
+    pendingAnnouncements: number;
     totalCategories: number;
     totalUsers: number;
-    pendingAnnouncements: number;
+    totalAccreditations?: number;
+    activeAccreditations?: number;
+    expiringAccreditations?: number;
+    totalAcademicUnits?: number;
+    studyProgramsCount?: number;
+    facultiesCount?: number;
+    lastSyncedAt?: string | null;
 }
 
 export interface DashboardProps {
     stats: DashboardStats;
+    univAccreditation?: any;
     recentAnnouncements: Announcement[];
+    recentAccreditations?: any[];
     recentLogs: ActivityLog[];
 }
