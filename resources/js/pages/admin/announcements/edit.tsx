@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import AnnouncementForm from '@/components/announcement-form';
 import { ArrowLeft } from 'lucide-react';
+import AnnouncementForm from '@/components/announcement-form';
+import { Button } from '@/components/ui/button';
 import type { AnnouncementDetail, AnnouncementCategory } from '@/types/announcement';
 
 type EditProps = {
@@ -11,11 +11,16 @@ type EditProps = {
 
 export default function Edit({ announcement, categories }: EditProps) {
     const formatDatetimeLocal = (date: string | null | undefined) => {
-        if (!date) return '';
+        if (!date) {
+return '';
+}
+
         const d = new Date(date);
         const pad = (n: number) => n.toString().padStart(2, '0');
+
         return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
     };
+
     return (
         <>
             <Head title="Edit Pengumuman" />
@@ -69,6 +74,7 @@ export default function Edit({ announcement, categories }: EditProps) {
                     method="put"
                     submitLabel="Update Pengumuman"
                     thumbnailUrl={announcement.thumbnail}
+                    existingImages={announcement.images ?? []}
                 />
             </div>
         </>

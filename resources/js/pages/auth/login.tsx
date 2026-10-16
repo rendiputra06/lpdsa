@@ -83,16 +83,24 @@ export default function Login({
 
                             <Button
                                 type="submit"
-                                className="mt-4 w-full"
+                                className="mt-4 w-full bg-brand-700 hover:bg-brand-800 text-white font-bold rounded-xl py-2.5 h-11 transition-all shadow-md hover:shadow-lg"
                                 tabIndex={4}
                                 disabled={processing}
                                 data-test="login-button"
                             >
                                 {processing && <Spinner />}
-                                Log in
+                                Masuk ke Sistem
                             </Button>
                         </div>
 
+                        {canRegister && (
+                            <div className="text-center text-xs text-slate-500 dark:text-neutral-400">
+                                Belum memiliki akun?{' '}
+                                <TextLink href="/register" className="font-bold text-brand-700 dark:text-gold-400">
+                                    Daftar sekarang
+                                </TextLink>
+                            </div>
+                        )}
                     </>
                 )}
             </Form>
@@ -107,6 +115,6 @@ export default function Login({
 }
 
 Login.layout = {
-    title: 'Log in to your account',
-    description: 'Enter your email and password below to log in',
+    title: 'Masuk ke Portal LPDSA',
+    description: 'Masukkan email dan kata sandi Anda untuk mengakses portal administrasi',
 };

@@ -1,12 +1,12 @@
 import { Head, useForm } from '@inertiajs/react';
+import { Edit, Trash, Plus } from 'lucide-react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Edit, Trash, Plus } from 'lucide-react';
-import React from 'react';
 
 export default function Index({ menus }: any) {
     const [editingMenu, setEditingMenu] = React.useState<any>(null);
@@ -22,6 +22,7 @@ export default function Index({ menus }: any) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (editingMenu) {
             put(`/admin/menus/${editingMenu.id}`, {
                 onSuccess: () => {
@@ -66,6 +67,7 @@ export default function Index({ menus }: any) {
                 <h1 className="text-2xl font-bold">Menu Navigasi</h1>
                 <Dialog open={isDialogOpen} onOpenChange={(open) => {
                     setIsDialogOpen(open);
+
                     if (!open) {
                         setEditingMenu(null);
                         reset();

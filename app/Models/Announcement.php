@@ -56,6 +56,16 @@ class Announcement extends Model
         return $this->hasMany(AnnouncementAttachment::class);
     }
 
+    public function images()
+    {
+        return $this->hasMany(AnnouncementImage::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function coverImage()
+    {
+        return $this->hasOne(AnnouncementImage::class)->where('is_cover', true);
+    }
+
     public function eventDetail()
     {
         return $this->hasOne(EventDetail::class, 'announcement_id', 'id');

@@ -9,7 +9,8 @@ import {
     Image as ImageIcon,
     History,
     Globe,
-    Settings
+    Settings,
+    Award
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -42,6 +43,11 @@ const mainNavItems: NavItem[] = [
         title: 'Kategori',
         href: '/admin/categories',
         icon: Tags,
+    },
+    {
+        title: 'Data Akreditasi',
+        href: '/admin/accreditations',
+        icon: Award,
     },
     {
         title: 'Menu Navigasi',

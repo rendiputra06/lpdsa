@@ -1,5 +1,6 @@
-import { useState } from 'react';
 import { useForm } from '@inertiajs/react';
+import { Trash2, AlertTriangle } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,7 +13,6 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { Trash2, AlertTriangle } from 'lucide-react';
 import type { AnnouncementDetail } from '@/types/announcement';
 
 type DeleteAnnouncementDialogProps = {

@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import AnnouncementForm from '@/components/announcement-form';
 import { ArrowLeft } from 'lucide-react';
+import AnnouncementForm from '@/components/announcement-form';
+import { Button } from '@/components/ui/button';
 import type { AnnouncementCategory } from '@/types/announcement';
 
 type CreateProps = {

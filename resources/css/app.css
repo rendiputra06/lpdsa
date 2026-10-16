@@ -11,7 +11,7 @@
 
 @theme {
     --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Plus Jakarta Sans', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
 
@@ -64,6 +64,31 @@
 
     --color-univrab-blue: var(--univrab-blue);
     --color-univrab-gold: var(--univrab-gold);
+
+    --color-brand-50: #fdf2f4;
+    --color-brand-100: #fce5e8;
+    --color-brand-200: #f9ced5;
+    --color-brand-300: #f4a7b5;
+    --color-brand-400: #ec758d;
+    --color-brand-500: #dc4867;
+    --color-brand-600: #b81d3d;
+    --color-brand-700: #8b142c;
+    --color-brand-800: #800000;
+    --color-brand-900: #5c0f1f;
+    --color-brand-950: #38050f;
+
+    --color-gold-50: #fefce8;
+    --color-gold-100: #fef9c3;
+    --color-gold-200: #fef08a;
+    --color-gold-300: #fde047;
+    --color-gold-400: #facc15;
+    --color-gold-500: #eab308;
+    --color-gold-600: #ca8a04;
+    --color-gold-700: #a16207;
+    --color-gold-800: #854d0e;
+
+    --color-plum-900: #4a1035;
+    --color-plum-950: #2f0721;
 }
 
 :root {
@@ -213,4 +238,48 @@
 
 .animate-ken-burns {
     animation: kenBurns 20s ease-in-out infinite;
+}
+
+/* Public UI utilities matching Univrab design system */
+.pattern-dots {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.18) 1.5px, transparent 1.5px);
+    background-size: 24px 24px;
+}
+
+.pattern-dots-dark {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1.5px, transparent 1.5px);
+    background-size: 24px 24px;
+}
+
+.pattern-dots-maroon {
+    background-image: radial-gradient(#800000 1.5px, transparent 1.5px);
+    background-size: 24px 24px;
+    opacity: 0.08;
+}
+
+.glass-pill {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.glass-card-light {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+.dark .glass-card-light {
+    background: rgba(18, 24, 38, 0.92);
+}
+
+@media print {
+    nav, footer, .no-print {
+        display: none !important;
+    }
+    body {
+        background: white !important;
+        color: black !important;
+    }
 }

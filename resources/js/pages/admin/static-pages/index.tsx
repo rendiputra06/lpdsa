@@ -1,10 +1,10 @@
 import { Head, Link } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Edit, ExternalLink, FileText, Layout, Search, Plus, Trash2 } from 'lucide-react';
 import { router } from '@inertiajs/react';
-import { Input } from '@/components/ui/input';
+import { Edit, ExternalLink, FileText, Search, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export default function Index({ pages }: any) {
     const [search, setSearch] = useState('');

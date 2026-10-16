@@ -1,11 +1,11 @@
 import { Head, useForm } from '@inertiajs/react';
+import { Edit, Trash, Plus } from 'lucide-react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Edit, Trash, Plus } from 'lucide-react';
-import React from 'react';
 
 export default function Index({ categories }: any) {
     const [editingCategory, setEditingCategory] = React.useState<any>(null);
@@ -18,6 +18,7 @@ export default function Index({ categories }: any) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (editingCategory) {
             put(`/admin/categories/${editingCategory.id}`, {
                 onSuccess: () => {
@@ -59,6 +60,7 @@ export default function Index({ categories }: any) {
                 <h1 className="text-2xl font-bold">Kategori</h1>
                 <Dialog open={isDialogOpen} onOpenChange={(open) => {
                     setIsDialogOpen(open);
+
                     if (!open) {
                         setEditingCategory(null);
                         reset();

@@ -1,362 +1,688 @@
 import { Head, Link } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { 
-    ArrowRight, 
-    AlertCircle, 
-    ChevronLeft, 
+import {
+    ArrowRight,
+    ArrowUpRight,
+    ChevronLeft,
     ChevronRight,
-    Award,
     Database,
-    GraduationCap,
-    Users,
-    FileCheck,
-    TrendingUp
+    ShieldCheck,
+    Award,
+    FileText,
+    Calendar,
+    FolderKanban,
+    Layers,
+    DownloadCloud,
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
+import AnnouncementCard from '@/components/public/announcement-card';
+import EventCard from '@/components/public/event-card';
+import SectionHeader from '@/components/public/section-header';
+import { formatDate } from '@/lib/format';
 
-export default function Welcome({ banners }: any) {
-    // Banner carousel state
+interface WelcomeProps {
+    banners?: any[];
+    heroSettings?: {
+        hero_badge_text?: string;
+        hero_welcome_title?: string;
+        hero_welcome_subtitle?: string;
+    };
+    featuredAnnouncement?: any;
+    latestAnnouncements?: any[];
+    upcomingEvents?: any[];
+    latestDocuments?: any[];
+    stats?: {
+        announcements_count: number;
+        categories_count: number;
+        events_count: number;
+        documents_count: number;
+        accreditations_count?: number;
+    };
+}
+
+export default function Welcome({
+    banners = [],
+    heroSettings,
+    featuredAnnouncement,
+    latestAnnouncements = [],
+    upcomingEvents = [],
+    stats = {
+        announcements_count: 0,
+        categories_count: 0,
+        events_count: 0,
+        documents_count: 0,
+        accreditations_count: 0,
+    },
+}: WelcomeProps) {
+    const activeBanners = banners?.filter((banner: any) => banner.is_active) || [];
     const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
     const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
-    // Get active banners only
-    const activeBanners = banners?.filter((banner: any) => banner.is_active) || [];
-
-    // Auto-play carousel
+    // Carousel autoplay
     useEffect(() => {
-        if (!isAutoPlaying || activeBanners.length <= 1) return;
+        if (!isAutoPlaying || activeBanners.length <= 1) {
+return;
+}
 
         const interval = setInterval(() => {
             setCurrentBannerIndex((prev) => (prev + 1) % activeBanners.length);
-        }, 5000); // Change every 5 seconds
+        }, 6000);
 
         return () => clearInterval(interval);
     }, [isAutoPlaying, activeBanners.length]);
 
-    // Manual navigation
     const goToBanner = useCallback((index: number) => {
         setCurrentBannerIndex(index);
-        setIsAutoPlaying(false); // Pause auto-play on manual interaction
-        // Resume auto-play after 10 seconds
-        setTimeout(() => setIsAutoPlaying(true), 10000);
+        setIsAutoPlaying(false);
+        const timeout = setTimeout(() => setIsAutoPlaying(true), 12000);
+
+        return () => clearTimeout(timeout);
     }, []);
 
     const nextBanner = useCallback(() => {
-        goToBanner((currentBannerIndex + 1) % activeBanners.length);
+        goToBanner((currentBannerIndex + 1) % (activeBanners.length || 1));
     }, [currentBannerIndex, activeBanners.length, goToBanner]);
 
     const prevBanner = useCallback(() => {
-        goToBanner((currentBannerIndex - 1 + activeBanners.length) % activeBanners.length);
+        goToBanner((currentBannerIndex - 1 + (activeBanners.length || 1)) % (activeBanners.length || 1));
     }, [currentBannerIndex, activeBanners.length, goToBanner]);
 
-    // Loading state
-    const isLoading = !banners;
+    const heroBadge = typeof heroSettings?.hero_badge_text === 'string' && heroSettings.hero_badge_text
+        ? heroSettings.hero_badge_text
+        : 'Lembaga Penjaminan Mutu & Pengembangan Pendidikan';
 
-    // Error handling for missing data
-    if (!banners) {
-        return (
-            <>
-                <Head title="Pusat Pengumuman LPDSA" />
-                <div className="flex items-center justify-center min-h-[50vh]">
-                    <div className="text-center">
-                        <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-                        <p className="text-slate-600 dark:text-neutral-400">Terjadi kesalahan saat memuat data. Silakan refresh halaman.</p>
-                    </div>
-                </div>
-            </>
-        );
-    }
+    const heroTitle = typeof heroSettings?.hero_welcome_title === 'string' && heroSettings.hero_welcome_title
+        ? heroSettings.hero_welcome_title
+        : 'Selamat Datang di Pusat Informasi & Pengumuman LPDSA';
+
+    const heroSubtitle = typeof heroSettings?.hero_welcome_subtitle === 'string' && heroSettings.hero_welcome_subtitle
+        ? heroSettings.hero_welcome_subtitle
+        : 'Media resmi publikasi pengumuman akademik, penjaminan mutu, layanan digital, dan agenda Universitas Abdurrab.';
 
     return (
         <>
-            <Head title="Pusat Pengumuman LPDSA">
-                <meta name="description" content="Pusat Pengumuman LPDSA Universitas Abdurrab - Lembaga Pangkalan Data, SPMI, dan Akreditasi. Dapatkan informasi terkini seputar akademik, akreditasi, dan kegiatan universitas." />
-                <meta property="og:title" content="Pusat Pengumuman LPDSA - Universitas Abdurrab" />
-                <meta property="og:description" content="Lembaga Pangkalan Data, SPMI, dan Akreditasi Universitas Abdurrab. Menjamin mutu akademik dan akurasi data universitas." />
+            <Head title="Pusat Informasi & Pengumuman LPDSA">
+                <meta
+                    name="description"
+                    content="Lembaga Pangkalan Data, SPMI, dan Akreditasi Universitas Abdurrab. Menjamin mutu akademik, akurasi data pangkalan data, dan fasilitasi akreditasi universitas."
+                />
+                <meta property="og:title" content="Portal LPDSA - Universitas Abdurrab" />
+                <meta
+                    property="og:description"
+                    content="Lembaga Pangkalan Data, SPMI, dan Akreditasi Universitas Abdurrab."
+                />
                 <meta property="og:type" content="website" />
-                <meta property="og:url" content={window.location.href} />
-                <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:title" content="Pusat Pengumuman LPDSA - Universitas Abdurrab" />
-                <meta name="twitter:description" content="Lembaga Pangkalan Data, SPMI, dan Akreditasi Universitas Abdurrab." />
             </Head>
 
-            {/* Hero Section / Full Screen Banner Carousel */}
-            <section className="relative h-screen overflow-hidden bg-slate-900">
-                {/* Full Screen Background Images with Ken Burns Effect */}
-                <div className="absolute inset-0">
-                    {activeBanners.length > 0 ? (
-                        activeBanners.map((banner: any, index: number) => (
-                            <div
-                                key={banner.id}
-                                className={`absolute inset-0 transition-all duration-[2000ms] ease-in-out ${
-                                    index === currentBannerIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-110'
-                                }`}
-                            >
-                                {banner.image_path ? (
-                                    <div
-                                        className="absolute inset-0 bg-cover bg-center animate-ken-burns"
-                                        style={{ 
-                                            backgroundImage: `url(/storage/${banner.image_path})`,
-                                            animation: index === currentBannerIndex ? 'kenBurns 20s ease-in-out infinite' : 'none'
-                                        }}
-                                    />
-                                ) : (
-                                    <div 
-                                        className="absolute inset-0 bg-cover bg-center"
-                                        style={{ backgroundImage: `url('https://univrab.ac.id/wp-content/uploads/2021/08/Gedung-Univrab.jpg')` }}
-                                    />
-                                )}
-                                {/* Subtle gradient overlay - not blocking the image */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/40" />
+            {/* 1. HERO SECTION (Split layout matching Univrab Homepage reference) */}
+            <section
+                aria-label="Sorotan Utama LPDSA"
+                className="relative bg-linear-to-br from-brand-900 via-brand-800 to-brand-950 text-white overflow-hidden pt-12 pb-24 md:pb-28"
+            >
+                {/* Background dot pattern */}
+                <div className="absolute inset-0 pattern-dots opacity-25 pointer-events-none" />
+
+                <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+                        {/* Hero Text Column (Left) */}
+                        <div className="lg:col-span-6 space-y-6">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-pill text-xs font-bold uppercase tracking-wider text-gold-300">
+                                <span className="h-2 w-2 rounded-full bg-gold-400 animate-pulse" />
+                                <span>{heroBadge}</span>
                             </div>
-                        ))
-                    ) : (
-                        <div className="absolute inset-0">
-                            <div 
-                                className="absolute inset-0 bg-cover bg-center"
-                                style={{ backgroundImage: `url('https://univrab.ac.id/wp-content/uploads/2021/08/Gedung-Univrab.jpg')` }}
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/40" />
-                        </div>
-                    )}
-                </div>
 
-                {/* Minimal Top Navigation Hint */}
-                <div className="absolute top-6 left-6 z-20">
-                    <div className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-                        <span className="text-white/80 text-sm font-medium">Universitas Abdurrab</span>
-                    </div>
-                </div>
+                            <h1 className="text-3xl sm:text-5xl lg:text-5xl font-black tracking-tight leading-[1.15] text-balance">
+                                {heroTitle}
+                            </h1>
 
-                {/* Navigation Arrows - Positioned at sides */}
-                {activeBanners.length > 1 && (
-                    <>
-                        <button
-                            onClick={prevBanner}
-                            className="absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-300 border border-white/20"
-                            aria-label="Banner sebelumnya"
-                        >
-                            <ChevronLeft className="h-6 w-6 text-white" />
-                        </button>
-                        <button
-                            onClick={nextBanner}
-                            className="absolute right-4 lg:right-8 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-300 border border-white/20"
-                            aria-label="Banner selanjutnya"
-                        >
-                            <ChevronRight className="h-6 w-6 text-white" />
-                        </button>
-                    </>
-                )}
+                            <p className="text-base sm:text-lg text-slate-200/90 leading-relaxed max-w-xl">
+                                {heroSubtitle}
+                            </p>
 
-                {/* Dots Indicator - Bottom center */}
-                {activeBanners.length > 1 && (
-                    <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-20 flex gap-3">
-                        {activeBanners.map((_: any, index: number) => (
-                            <button
-                                key={index}
-                                onClick={() => goToBanner(index)}
-                                className={`h-2 rounded-full transition-all duration-500 ${
-                                    index === currentBannerIndex
-                                        ? 'bg-white w-8'
-                                        : 'bg-white/40 w-2 hover:bg-white/60'
-                                }`}
-                                aria-label={`Pindah ke banner ${index + 1}`}
-                            />
-                        ))}
-                    </div>
-                )}
-
-                {/* Banner Counter */}
-                {activeBanners.length > 1 && (
-                    <div className="absolute bottom-8 right-8 z-20 text-sm text-white/60 font-medium">
-                        <span className="text-white">{currentBannerIndex + 1}</span>
-                        <span className="mx-2">/</span>
-                        <span>{activeBanners.length}</span>
-                    </div>
-                )}
-            </section>
-
-            {/* Banner Info Cards - Below the Image */}
-            <section className="relative -mt-20 z-30 px-4 sm:px-6 lg:px-8">
-                <div className="max-w-6xl mx-auto">
-                    {activeBanners.length > 0 ? (
-                        <div className="relative">
-                            {activeBanners.map((banner: any, index: number) => (
-                                <div
-                                    key={banner.id}
-                                    className={`transition-all duration-700 ${
-                                        index === currentBannerIndex
-                                            ? 'opacity-100 translate-y-0'
-                                            : 'opacity-0 translate-y-8 absolute inset-0 pointer-events-none'
-                                    }`}
+                            <div className="flex flex-wrap items-center gap-3 pt-2">
+                                <Link
+                                    href="/profil"
+                                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-brand-900 font-bold text-sm hover:bg-gold-400 hover:text-neutral-950 transition-all shadow-lg hover:scale-102"
                                 >
-                                    <Card className="bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm shadow-2xl border-0">
-                                        <CardContent className="p-6 md:p-8">
-                                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                                <div className="flex-1">
-                                                    <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-2">
-                                                        {banner.title}
-                                                    </h2>
-                                                    {banner.text && (
-                                                        <p className="text-slate-600 dark:text-slate-300 text-lg">
-                                                            {banner.text}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                                {banner.link && (
-                                                    <a
-                                                        href={banner.link}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="inline-flex items-center gap-2 px-6 py-3 bg-univrab-blue text-white font-semibold rounded-full hover:bg-blue-700 transition-colors shadow-lg whitespace-nowrap"
-                                                    >
-                                                        Selengkapnya <ArrowRight className="h-5 w-5" />
-                                                    </a>
+                                    <span>Tentang LPDSA</span>
+                                    <ArrowRight className="h-4 w-4" />
+                                </Link>
+
+                                <Link
+                                    href="/akreditasi"
+                                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full glass-pill text-white font-bold text-sm hover:bg-white/20 hover:border-gold-400/50 transition-all shadow-md"
+                                >
+                                    <Award className="h-4 w-4 text-gold-300" />
+                                    <span>Lihat Akreditasi</span>
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Hero Visual Container Column (Right - Curved asymmetry matching Univrab) */}
+                        <div className="lg:col-span-6 relative">
+                            <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
+                                {/* Asymmetrical curved framing matching Univrab */}
+                                <div className="relative aspect-4/3 w-full rounded-tl-[64px] rounded-br-[64px] rounded-tr-3xl rounded-bl-3xl overflow-hidden border-2 border-white/20 shadow-2xl bg-neutral-900">
+                                    {activeBanners.length > 0 ? (
+                                        activeBanners.map((banner: any, idx: number) => (
+                                            <div
+                                                key={banner.id}
+                                                className={`absolute inset-0 transition-opacity duration-1000 ${
+                                                    idx === currentBannerIndex
+                                                        ? 'opacity-100 pointer-events-auto'
+                                                        : 'opacity-0 pointer-events-none'
+                                                }`}
+                                            >
+                                                {banner.image_path ? (
+                                                    <img
+                                                        src={`/storage/${banner.image_path}`}
+                                                        alt={banner.title}
+                                                        fetchPriority={idx === 0 ? 'high' : 'low'}
+                                                        className="h-full w-full object-cover animate-ken-burns"
+                                                    />
+                                                ) : (
+                                                    <div className="h-full w-full flex items-center justify-center bg-linear-to-br from-brand-950 via-brand-900 to-plum-950 p-8 text-center">
+                                                        <div>
+                                                            <div className="h-16 w-16 rounded-2xl bg-white/10 flex items-center justify-center mx-auto mb-4 border border-white/20">
+                                                                <Award className="h-8 w-8 text-gold-400" />
+                                                            </div>
+                                                            <h3 className="text-xl font-bold text-white mb-2">{banner.title}</h3>
+                                                            <p className="text-xs text-slate-300 max-w-sm mx-auto">{banner.text}</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Ambient dark gradient overlay to ensure text contrast */}
+                                                <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/25 to-black/10" />
+
+                                                {/* Overlay card for Banner Title & Description placed ON TOP of the image */}
+                                                {(banner.title || banner.text) && (
+                                                    <div className="absolute inset-x-3 sm:inset-x-5 bottom-3 sm:bottom-5 z-10 p-4 sm:p-5 rounded-2xl bg-black/70 backdrop-blur-md border border-white/20 text-white shadow-xl transition-all">
+                                                        <div className="flex items-start justify-between gap-3">
+                                                            <div className="space-y-1 min-w-0">
+                                                                {banner.title && (
+                                                                    <h3 className="text-base sm:text-lg font-bold text-white line-clamp-2 leading-snug drop-shadow-sm">
+                                                                        {banner.title}
+                                                                    </h3>
+                                                                )}
+                                                                {banner.text && (
+                                                                    <p className="text-xs sm:text-sm text-slate-200/90 line-clamp-2 leading-relaxed">
+                                                                        {banner.text}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                            {banner.link && (
+                                                                <a
+                                                                    href={banner.link}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="shrink-0 p-2 rounded-xl bg-white/20 hover:bg-gold-400 hover:text-neutral-950 text-white transition-all shadow"
+                                                                    title="Buka Tautan Banner"
+                                                                >
+                                                                    <ArrowUpRight className="h-4 w-4" />
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 )}
                                             </div>
-                                        </CardContent>
-                                    </Card>
+                                        ))
+                                    ) : (
+                                        <div className="h-full w-full flex items-center justify-center bg-linear-to-br from-brand-950 via-brand-900 to-plum-950 p-8 text-center">
+                                            <div>
+                                                <div className="h-16 w-16 rounded-2xl bg-white/10 flex items-center justify-center mx-auto mb-4 border border-white/20">
+                                                    <Award className="h-8 w-8 text-gold-400" />
+                                                </div>
+                                                <h3 className="text-xl font-bold text-white mb-2">Universitas Abdurrab</h3>
+                                                <p className="text-xs text-slate-300">
+                                                    Lembaga Pangkalan Data, SPMI, dan Akreditasi
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <Card className="bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm shadow-2xl border-0">
-                            <CardContent className="p-6 md:p-8">
-                                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                    <div className="flex-1">
-                                        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-2">
-                                            Lembaga Pangkalan Data, SPMI, dan Akreditasi
-                                        </h2>
-                                        <p className="text-slate-600 dark:text-slate-300 text-lg">
-                                            Universitas Abdurrab - Menjamin Mutu, Mengelola Data, Memfasilitasi Akreditasi.
-                                        </p>
+
+                                {/* Carousel Controls (Dots & Arrows) */}
+                                {activeBanners.length > 1 && (
+                                    <div className="flex items-center justify-between mt-4 px-2">
+                                        <div className="flex items-center gap-2">
+                                            {activeBanners.map((_: any, idx: number) => (
+                                                <button
+                                                    key={idx}
+                                                    type="button"
+                                                    onClick={() => goToBanner(idx)}
+                                                    aria-label={`Slide ${idx + 1}`}
+                                                    className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                                                        idx === currentBannerIndex
+                                                            ? 'w-8 bg-gold-400'
+                                                            : 'w-2 bg-white/40 hover:bg-white/70'
+                                                    }`}
+                                                />
+                                            ))}
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={prevBanner}
+                                                aria-label="Slide sebelumnya"
+                                                className="p-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-colors cursor-pointer"
+                                            >
+                                                <ChevronLeft className="h-4 w-4" />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={nextBanner}
+                                                aria-label="Slide selanjutnya"
+                                                className="p-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-colors cursor-pointer"
+                                            >
+                                                <ChevronRight className="h-4 w-4" />
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
-            {/* Campus Advantages Section */}
-            <section className="py-20 bg-slate-50 dark:bg-neutral-900">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    {/* Section Header */}
-                    <div className="text-center mb-16">
-                        <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-                            Mengapa Memilih <span className="text-univrab-blue">Universitas Abdurrab</span>?
+            {/* 2. OVERLAPPING HIGHLIGHT CARD (Matching Univrab PMB Card) */}
+            <section aria-label="Akses Cepat Dokumen & Pengumuman Unggulan" className="relative -mt-16 sm:-mt-20 z-20 px-4 sm:px-6 lg:px-8 mb-16">
+                <div className="max-w-7xl mx-auto">
+                    <div className="rounded-3xl bg-white dark:bg-neutral-900 shadow-2xl border border-slate-200/80 dark:border-neutral-800 p-6 sm:p-8 transition-colors">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                            {/* Left: Featured Announcement Pill */}
+                            <div className="lg:col-span-7 space-y-3 min-w-0 overflow-hidden">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-brand-50 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 border border-brand-200/80 dark:border-brand-900/60">
+                                    <span className="h-2 w-2 rounded-full bg-brand-700 dark:bg-brand-400 animate-pulse" />
+                                    <span>Pengumuman Terkini LPDSA</span>
+                                </div>
+
+                                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-snug break-words">
+                                    {featuredAnnouncement ? (
+                                        <Link
+                                            href={`/announcements/${featuredAnnouncement.slug}`}
+                                            className="hover:text-brand-700 dark:hover:text-gold-400 transition-colors break-words"
+                                        >
+                                            {featuredAnnouncement.title}
+                                        </Link>
+                                    ) : (
+                                        'Portal Informasi Resmi Lembaga Pangkalan Data, SPMI, dan Akreditasi'
+                                    )}
+                                </h2>
+
+                                <p className="text-sm text-slate-600 dark:text-neutral-400 line-clamp-2 break-words overflow-hidden leading-relaxed">
+                                    {(featuredAnnouncement?.excerpt && featuredAnnouncement.excerpt.trim())
+                                        ? featuredAnnouncement.excerpt.replace(/<[^>]*>?/gm, '').trim()
+                                        : (featuredAnnouncement?.content
+                                            ? featuredAnnouncement.content.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').trim().slice(0, 140) + '...'
+                                            : 'Akses panduan pengisian PDDIKTI, dokumen SPMI, serta surat edaran akreditasi terbaru bagi civitas akademika Universitas Abdurrab.')}
+                                </p>
+
+                                <div className="pt-1 flex items-center gap-4 text-xs text-slate-500 dark:text-neutral-400">
+                                    {featuredAnnouncement?.published_at && (
+                                        <span className="flex items-center gap-1.5 font-medium">
+                                            <Calendar className="h-3.5 w-3.5 text-brand-700 dark:text-gold-400" />
+                                            {formatDate(featuredAnnouncement.published_at)}
+                                        </span>
+                                    )}
+                                    {featuredAnnouncement?.category && (
+                                        <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 font-semibold text-[11px]">
+                                            {featuredAnnouncement.category.name}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Right: Quick Action Cards */}
+                            <div className="lg:col-span-5 grid grid-cols-2 gap-3">
+                                <Link
+                                    href="/dokumen"
+                                    className="p-4 rounded-2xl bg-slate-50 dark:bg-neutral-800/80 border border-slate-200/70 dark:border-neutral-700/60 hover:border-brand-700 hover:shadow-md transition-all group"
+                                >
+                                    <div className="h-9 w-9 rounded-xl bg-brand-50 dark:bg-neutral-900 flex items-center justify-center text-brand-700 dark:text-gold-400 mb-2 group-hover:scale-110 transition-transform">
+                                        <DownloadCloud className="h-5 w-5" />
+                                    </div>
+                                    <span className="font-bold text-sm text-slate-900 dark:text-white block group-hover:text-brand-700 dark:group-hover:text-gold-400 transition-colors">
+                                        Pedoman SPMI
+                                    </span>
+                                    <span className="text-[11px] text-slate-500 dark:text-neutral-400 block mt-0.5">
+                                        Standar & SOP Mutu
+                                    </span>
+                                </Link>
+
+                                <Link
+                                    href="/akreditasi"
+                                    className="p-4 rounded-2xl bg-slate-50 dark:bg-neutral-800/80 border border-slate-200/70 dark:border-neutral-700/60 hover:border-brand-700 hover:shadow-md transition-all group"
+                                >
+                                    <div className="h-9 w-9 rounded-xl bg-gold-50 dark:bg-neutral-900 flex items-center justify-center text-gold-600 dark:text-gold-400 mb-2 group-hover:scale-110 transition-transform">
+                                        <Award className="h-5 w-5" />
+                                    </div>
+                                    <span className="font-bold text-sm text-slate-900 dark:text-white block group-hover:text-brand-700 dark:group-hover:text-gold-400 transition-colors">
+                                        Data Akreditasi
+                                    </span>
+                                    <span className="text-[11px] text-slate-500 dark:text-neutral-400 block mt-0.5">
+                                        Status & Sertifikat BAN-PT/LAM
+                                    </span>
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* 3. STATISTIK LPDSA (Univrab "Tumbuh bersama generasi unggul" counter section) */}
+            <section aria-label="Statistik Lembaga" className="py-12 bg-slate-50/50 dark:bg-neutral-950 transition-colors">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <SectionHeader
+                        eyebrow="Transparansi & Akurasi"
+                        title={
+                            <>
+                                Menjamin Mutu Melalui{' '}
+                                <span className="text-brand-700 dark:text-gold-400">Data Terpercaya</span>.
+                            </>
+                        }
+                        description="Pengelolaan pangkalan data terintegrasi, instrumen penjaminan mutu berkala, serta rekam jejak akreditasi institusi dan program studi."
+                    />
+
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                        <div className="p-6 rounded-3xl bg-white dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 shadow-xs hover:shadow-lg transition-all">
+                            <div className="h-10 w-10 rounded-2xl bg-brand-50 dark:bg-brand-950/60 flex items-center justify-center text-brand-700 dark:text-gold-400 mb-4">
+                                <FileText className="h-5 w-5" />
+                            </div>
+                            <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                                {stats.announcements_count}+
+                            </div>
+                            <div className="text-xs sm:text-sm font-medium text-slate-500 dark:text-neutral-400 mt-1">
+                                Pengumuman & Berita Terbit
+                            </div>
+                        </div>
+
+                        <div className="p-6 rounded-3xl bg-white dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 shadow-xs hover:shadow-lg transition-all">
+                            <div className="h-10 w-10 rounded-2xl bg-gold-50 dark:bg-gold-950/60 flex items-center justify-center text-gold-600 dark:text-gold-400 mb-4">
+                                <Calendar className="h-5 w-5" />
+                            </div>
+                            <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                                {stats.events_count}
+                            </div>
+                            <div className="text-xs sm:text-sm font-medium text-slate-500 dark:text-neutral-400 mt-1">
+                                Agenda & Event Akademik
+                            </div>
+                        </div>
+
+                        <div className="p-6 rounded-3xl bg-white dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 shadow-xs hover:shadow-lg transition-all">
+                            <div className="h-10 w-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-4">
+                                <FolderKanban className="h-5 w-5" />
+                            </div>
+                            <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                                {stats.documents_count || 12}+
+                            </div>
+                            <div className="text-xs sm:text-sm font-medium text-slate-500 dark:text-neutral-400 mt-1">
+                                Dokumen SPMI & Regulasi
+                            </div>
+                        </div>
+
+                        <div className="p-6 rounded-3xl bg-white dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 shadow-xs hover:shadow-lg transition-all">
+                            <div className="h-10 w-10 rounded-2xl bg-purple-50 dark:bg-purple-950/60 flex items-center justify-center text-purple-600 dark:text-purple-400 mb-4">
+                                <Layers className="h-5 w-5" />
+                            </div>
+                            <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                                {stats.categories_count}
+                            </div>
+                            <div className="text-xs sm:text-sm font-medium text-slate-500 dark:text-neutral-400 mt-1">
+                                Kategori Bidang Layanan
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* 4. LAYANAN UTAMA LPDSA (3 Pilar Lembaga menggantikan "Mengapa Memilih Univrab") */}
+            <section aria-label="Layanan Utama LPDSA" className="py-16 bg-white dark:bg-neutral-900/50 transition-colors">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <SectionHeader
+                        eyebrow="Tugas & Fungsi"
+                        title={
+                            <>
+                                Tiga Pilar Layanan Utama{' '}
+                                <span className="text-brand-700 dark:text-gold-400">LPDSA</span>
+                            </>
+                        }
+                        description="Komitmen kami dalam menjamin standar mutu pendidikan tinggi, keabsahan data nasional, dan kesuksesan akreditasi."
+                        actionHref="/about"
+                        actionLabel="Tentang Lembaga"
+                    />
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {/* Pilar 1 */}
+                        <div className="p-8 rounded-3xl bg-slate-50 dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 hover:border-brand-700 dark:hover:border-gold-400 hover:shadow-xl transition-all duration-300 group">
+                            <div className="h-14 w-14 rounded-2xl bg-brand-50 dark:bg-brand-950/60 flex items-center justify-center text-brand-700 dark:text-gold-400 mb-6 group-hover:bg-brand-700 group-hover:text-white transition-all">
+                                <Database className="h-7 w-7" />
+                            </div>
+                            <h3 className="text-xl font-extrabold text-slate-900 dark:text-white mb-3 group-hover:text-brand-700 dark:group-hover:text-gold-400 transition-colors">
+                                Pangkalan Data (PDDIKTI)
+                            </h3>
+                            <p className="text-sm text-slate-600 dark:text-neutral-400 leading-relaxed mb-6">
+                                Pengelolaan sinkronisasi data akademik, mahasiswa, dosen, dan pelaporan berkala ke Pangkalan Data Pendidikan Tinggi Kementerian secara akurat dan tepat waktu.
+                            </p>
+                            <Link
+                                href="/announcements?category=akademik"
+                                className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-700 dark:text-gold-400 group-hover:underline"
+                            >
+                                <span>Edaran Pangkalan Data</span>
+                                <ArrowRight className="h-3.5 w-3.5" />
+                            </Link>
+                        </div>
+
+                        {/* Pilar 2 */}
+                        <div className="p-8 rounded-3xl bg-slate-50 dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 hover:border-brand-700 dark:hover:border-gold-400 hover:shadow-xl transition-all duration-300 group">
+                            <div className="h-14 w-14 rounded-2xl bg-gold-50 dark:bg-gold-950/60 flex items-center justify-center text-gold-600 dark:text-gold-400 mb-6 group-hover:bg-gold-500 group-hover:text-neutral-950 transition-all">
+                                <ShieldCheck className="h-7 w-7" />
+                            </div>
+                            <h3 className="text-xl font-extrabold text-slate-900 dark:text-white mb-3 group-hover:text-brand-700 dark:group-hover:text-gold-400 transition-colors">
+                                Penjaminan Mutu (SPMI)
+                            </h3>
+                            <p className="text-sm text-slate-600 dark:text-neutral-400 leading-relaxed mb-6">
+                                Pengembangan standar mutu universitas, pelaksanaan Audit Mutu Internal (AMI), serta penyusunan Rencana Tindak Lanjut (RTL) untuk perbaikan berkelanjutan.
+                            </p>
+                            <Link
+                                href="/dokumen"
+                                className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-700 dark:text-gold-400 group-hover:underline"
+                            >
+                                <span>Unduh Pedoman Mutu</span>
+                                <ArrowRight className="h-3.5 w-3.5" />
+                            </Link>
+                        </div>
+
+                        {/* Pilar 3 */}
+                        <div className="p-8 rounded-3xl bg-slate-50 dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 hover:border-brand-700 dark:hover:border-gold-400 hover:shadow-xl transition-all duration-300 group">
+                            <div className="h-14 w-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                                <Award className="h-7 w-7" />
+                            </div>
+                            <h3 className="text-xl font-extrabold text-slate-900 dark:text-white mb-3 group-hover:text-brand-700 dark:group-hover:text-gold-400 transition-colors">
+                                Fasilitasi Akreditasi
+                            </h3>
+                            <p className="text-sm text-slate-600 dark:text-neutral-400 leading-relaxed mb-6">
+                                Pendampingan penyusunan Dokumen Kinerja Program Studi (DKPS) dan Laporan Evaluasi Diri (LED) untuk BAN-PT maupun Lembaga Akreditasi Mandiri (LAM).
+                            </p>
+                            <Link
+                                href="/announcements?category=akreditasi"
+                                className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-700 dark:text-gold-400 group-hover:underline"
+                            >
+                                <span>Informasi Akreditasi</span>
+                                <ArrowRight className="h-3.5 w-3.5" />
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* 5. STRIP WAVE DIVIDER & CALL TO ACTION */}
+            <div className="relative bg-brand-900 text-white overflow-hidden py-14">
+                <div className="absolute inset-0 pattern-dots opacity-20 pointer-events-none" />
+                <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="max-w-2xl text-center md:text-left">
+                        <span className="text-xs font-bold uppercase tracking-wider text-gold-400 block mb-1">
+                            Pusat Unduhan Resmi
+                        </span>
+                        <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
+                            Butuh Dokumen Regulasi atau SOP Mutu Terbaru?
                         </h2>
-                        <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-                            Kampus berbasis wakaf dengan komitmen tinggi dalam pendidikan berkualitas dan pengembangan ilmu pengetahuan.
+                        <p className="mt-2 text-sm text-slate-200">
+                            Unduh seluruh dokumen standar SPMI, formulir AMI, dan instrumen akreditasi program studi di satu tempat.
                         </p>
                     </div>
-
-                    {/* Advantages Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {/* Advantage 1 */}
-                        <Card className="group hover:shadow-xl transition-all duration-300 border-0 bg-white dark:bg-neutral-800">
-                            <CardContent className="p-8">
-                                <div className="w-14 h-14 bg-univrab-blue/10 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-univrab-blue group-hover:scale-110 transition-all duration-300">
-                                    <Award className="h-7 w-7 text-univrab-blue group-hover:text-white transition-colors" />
-                                </div>
-                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
-                                    Akreditasi Terjamin
-                                </h3>
-                                <p className="text-slate-600 dark:text-slate-400">
-                                    Seluruh program studi telah terakreditasi dengan nilai baik dan unggul oleh BAN-PT.
-                                </p>
-                            </CardContent>
-                        </Card>
-
-                        {/* Advantage 2 */}
-                        <Card className="group hover:shadow-xl transition-all duration-300 border-0 bg-white dark:bg-neutral-800">
-                            <CardContent className="p-8">
-                                <div className="w-14 h-14 bg-univrab-gold/10 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-univrab-gold group-hover:scale-110 transition-all duration-300">
-                                    <Database className="h-7 w-7 text-univrab-gold group-hover:text-white transition-colors" />
-                                </div>
-                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
-                                    Pangkalan Data Modern
-                                </h3>
-                                <p className="text-slate-600 dark:text-slate-400">
-                                    Sistem informasi akademik terintegrasi dengan teknologi terkini untuk kemudahan akses data.
-                                </p>
-                            </CardContent>
-                        </Card>
-
-                        {/* Advantage 3 */}
-                        <Card className="group hover:shadow-xl transition-all duration-300 border-0 bg-white dark:bg-neutral-800">
-                            <CardContent className="p-8">
-                                <div className="w-14 h-14 bg-green-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-green-500 group-hover:scale-110 transition-all duration-300">
-                                    <FileCheck className="h-7 w-7 text-green-500 group-hover:text-white transition-colors" />
-                                </div>
-                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
-                                    SPMI Berkualitas
-                                </h3>
-                                <p className="text-slate-600 dark:text-slate-400">
-                                    Sistem Penjaminan Mutu Internal yang komprehensif untuk menjaga standar pendidikan tinggi.
-                                </p>
-                            </CardContent>
-                        </Card>
-
-                        {/* Advantage 4 */}
-                        <Card className="group hover:shadow-xl transition-all duration-300 border-0 bg-white dark:bg-neutral-800">
-                            <CardContent className="p-8">
-                                <div className="w-14 h-14 bg-purple-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-purple-500 group-hover:scale-110 transition-all duration-300">
-                                    <GraduationCap className="h-7 w-7 text-purple-500 group-hover:text-white transition-colors" />
-                                </div>
-                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
-                                    Dosen Berkualitas
-                                </h3>
-                                <p className="text-slate-600 dark:text-slate-400">
-                                    Didukung oleh pengajar berpengalaman dengan kualifikasi S2 dan S3 dari perguruan tinggi terkemuka.
-                                </p>
-                            </CardContent>
-                        </Card>
-
-                        {/* Advantage 5 */}
-                        <Card className="group hover:shadow-xl transition-all duration-300 border-0 bg-white dark:bg-neutral-800">
-                            <CardContent className="p-8">
-                                <div className="w-14 h-14 bg-orange-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-orange-500 group-hover:scale-110 transition-all duration-300">
-                                    <Users className="h-7 w-7 text-orange-500 group-hover:text-white transition-colors" />
-                                </div>
-                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
-                                    Komunitas Akademik
-                                </h3>
-                                <p className="text-slate-600 dark:text-slate-400">
-                                    Lingkungan belajar yang kolaboratif dengan berbagai organisasi kemahasiswaan aktif.
-                                </p>
-                            </CardContent>
-                        </Card>
-
-                        {/* Advantage 6 */}
-                        <Card className="group hover:shadow-xl transition-all duration-300 border-0 bg-white dark:bg-neutral-800">
-                            <CardContent className="p-8">
-                                <div className="w-14 h-14 bg-teal-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-teal-500 group-hover:scale-110 transition-all duration-300">
-                                    <TrendingUp className="h-7 w-7 text-teal-500 group-hover:text-white transition-colors" />
-                                </div>
-                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
-                                    Prospek Karir Cerah
-                                </h3>
-                                <p className="text-slate-600 dark:text-slate-400">
-                                    Alumni yang kompeten dan siap kerja dengan jaringan industri yang luas di berbagai sektor.
-                                </p>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    {/* CTA Button */}
-                    <div className="text-center mt-12">
-                        <Button 
-                            size="lg" 
-                            className="bg-univrab-blue hover:bg-blue-700 text-white px-8"
-                            asChild
+                    <div className="shrink-0">
+                        <Link
+                            href="/dokumen"
+                            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-gold-400 text-neutral-950 font-bold text-sm hover:bg-gold-300 transition-all shadow-lg hover:scale-102"
                         >
-                            <Link href="/announcements">
-                                Jelajahi Lebih Lanjut <ArrowRight className="ml-2 h-5 w-5" />
-                            </Link>
-                        </Button>
+                            <span>Buka Pusat Dokumen</span>
+                            <ArrowRight className="h-4 w-4" />
+                        </Link>
+                    </div>
+                </div>
+            </div>
+
+            {/* 6. INFORMASI KAMPUS 3 KOLOM (Direct pattern from univrab.ac.id bottom section) */}
+            <section aria-label="Berita dan Informasi Kampus" className="py-16 bg-slate-50 dark:bg-neutral-950 transition-colors">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <SectionHeader
+                        eyebrow="Informasi Terkini"
+                        title={
+                            <>
+                                Berita, Agenda &{' '}
+                                <span className="text-brand-700 dark:text-gold-400">Pengumuman</span>
+                            </>
+                        }
+                        description="Ikuti perkembangan terbaru seputar kegiatan akademik, sosialisasi mutu, dan surat edaran resmi LPDSA Universitas Abdurrab."
+                    />
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                        {/* Kolom 1: Agenda Kampus */}
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3 pb-3 border-b-2 border-brand-700 dark:border-gold-400">
+                                <div className="h-8 w-8 rounded-lg bg-brand-700 text-white flex items-center justify-center">
+                                    <Calendar className="h-4 w-4" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-base text-slate-900 dark:text-white leading-none">
+                                        Agenda Kampus
+                                    </h3>
+                                    <span className="text-[11px] text-slate-500 dark:text-neutral-400">
+                                        Jadwal kegiatan akademik
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                {upcomingEvents.length > 0 ? (
+                                    upcomingEvents.map((event: any) => (
+                                        <EventCard key={event.id} event={event} />
+                                    ))
+                                ) : (
+                                    <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 text-center text-xs text-slate-500">
+                                        Belum ada agenda kegiatan mendatang.
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="pt-2">
+                                <Link
+                                    href="/announcements?category=event"
+                                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-slate-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs font-bold text-slate-700 dark:text-neutral-300 hover:border-brand-700 hover:text-brand-700 transition-colors shadow-xs"
+                                >
+                                    <span>Agenda Lainnya</span>
+                                    <ArrowRight className="h-3.5 w-3.5" />
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Kolom 2: Berita Terkini */}
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3 pb-3 border-b-2 border-brand-700 dark:border-gold-400">
+                                <div className="h-8 w-8 rounded-lg bg-brand-700 text-white flex items-center justify-center">
+                                    <FileText className="h-4 w-4" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-base text-slate-900 dark:text-white leading-none">
+                                        Berita Terkini
+                                    </h3>
+                                    <span className="text-[11px] text-slate-500 dark:text-neutral-400">
+                                        Kabar & kegiatan lembaga
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                {latestAnnouncements.length > 0 ? (
+                                    latestAnnouncements.slice(0, 3).map((item: any) => (
+                                        <AnnouncementCard
+                                            key={item.id}
+                                            announcement={item}
+                                            variant="horizontal"
+                                        />
+                                    ))
+                                ) : (
+                                    <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 text-center text-xs text-slate-500">
+                                        Belum ada berita yang dipublikasikan.
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="pt-2">
+                                <Link
+                                    href="/announcements"
+                                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-slate-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs font-bold text-slate-700 dark:text-neutral-300 hover:border-brand-700 hover:text-brand-700 transition-colors shadow-xs"
+                                >
+                                    <span>Berita Lainnya</span>
+                                    <ArrowRight className="h-3.5 w-3.5" />
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Kolom 3: Pengumuman Resmi */}
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3 pb-3 border-b-2 border-brand-700 dark:border-gold-400">
+                                <div className="h-8 w-8 rounded-lg bg-brand-700 text-white flex items-center justify-center">
+                                    <Award className="h-4 w-4" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-base text-slate-900 dark:text-white leading-none">
+                                        Pengumuman
+                                    </h3>
+                                    <span className="text-[11px] text-slate-500 dark:text-neutral-400">
+                                        Rilis surat & edaran resmi
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                {latestAnnouncements.length > 0 ? (
+                                    latestAnnouncements.slice(0, 3).map((item: any) => (
+                                        <AnnouncementCard
+                                            key={item.id}
+                                            announcement={item}
+                                            variant="official"
+                                        />
+                                    ))
+                                ) : (
+                                    <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 text-center text-xs text-slate-500">
+                                        Belum ada pengumuman resmi.
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="pt-2">
+                                <Link
+                                    href="/announcements"
+                                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-slate-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs font-bold text-slate-700 dark:text-neutral-300 hover:border-brand-700 hover:text-brand-700 transition-colors shadow-xs"
+                                >
+                                    <span>Pengumuman Lainnya</span>
+                                    <ArrowRight className="h-3.5 w-3.5" />
+                                </Link>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

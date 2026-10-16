@@ -1,6 +1,6 @@
+import { usePage } from '@inertiajs/react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { cn } from '@/lib/utils';
-import { usePage } from '@inertiajs/react';
 
 interface AppLogoProps {
     className?: string;

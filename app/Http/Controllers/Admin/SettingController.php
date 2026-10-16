@@ -30,6 +30,14 @@ class SettingController extends Controller
             'contact_phone' => 'nullable|string',
             'contact_address' => 'nullable|string',
             'footer_text' => 'nullable|string',
+            'social_facebook' => 'nullable|string',
+            'social_instagram' => 'nullable|string',
+            'social_youtube' => 'nullable|string',
+            'hero_badge_text' => 'nullable|string|max:255',
+            'hero_welcome_title' => 'nullable|string|max:255',
+            'hero_welcome_subtitle' => 'nullable|string|max:1000',
+            'academic_api_url' => 'nullable|string|max:255',
+            'academic_api_token' => 'nullable|string|max:500',
         ]);
 
         foreach ($data as $key => $value) {

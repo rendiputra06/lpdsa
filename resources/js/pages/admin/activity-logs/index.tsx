@@ -1,9 +1,9 @@
 import { Head, useForm } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
+import { Search, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Clock } from 'lucide-react';
-import { Link } from '@inertiajs/react';
 
 export default function Index({ logs, filters }: any) {
     const { data, setData, get } = useForm({

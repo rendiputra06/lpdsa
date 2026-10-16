@@ -15,6 +15,7 @@ createInertiaApp({
         switch (true) {
             case name === 'welcome':
             case name.startsWith('announcements/'):
+            case name.startsWith('accreditations/'):
             case name === 'static-page':
                 return PublicLayout;
             case name.startsWith('auth/'):
@@ -35,7 +36,7 @@ createInertiaApp({
         );
     },
     progress: {
-        color: '#004A99',
+        color: '#8B142C',
         delay: 200,
     },
 });

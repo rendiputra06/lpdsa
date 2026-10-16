@@ -1,15 +1,15 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Save, FileText, Globe, Settings2 } from 'lucide-react';
+import { useEffect } from 'react';
 import ReactQuill from 'react-quill-new';
 import { toast } from 'sonner';
-import { useEffect } from 'react';
-import OrgStructureForm from '@/components/admin/org-structure-form';
 import DocumentsForm from '@/components/admin/documents-form';
+import OrgStructureForm from '@/components/admin/org-structure-form';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function Create() {
     const { data, setData, post, processing, errors } = useForm({

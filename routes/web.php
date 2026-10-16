@@ -8,6 +8,7 @@ use Laravel\Fortify\Features;
 Route::get('/', [LandingController::class, 'index'])->name('home');
 Route::get('/announcements', [LandingController::class, 'announcements'])->name('announcements.index');
 Route::get('/announcements/{slug}', [LandingController::class, 'showAnnouncement'])->name('announcements.show');
+Route::get('/akreditasi', [LandingController::class, 'accreditations'])->name('accreditations.index');
 
 // Authenticated Routes
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -21,6 +22,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['create', 'edit', 'show']);
         Route::resource('static-pages', \App\Http\Controllers\Admin\StaticPageController::class);
         Route::resource('banners', \App\Http\Controllers\Admin\BannerController::class)->except(['create', 'edit', 'show']);
+        Route::post('accreditations/sync', [\App\Http\Controllers\Admin\AccreditationController::class, 'syncFromApi'])->name('accreditations.sync');
+        Route::resource('accreditations', \App\Http\Controllers\Admin\AccreditationController::class)->except(['create', 'edit', 'show']);
         Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
         Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
         Route::get('activity-logs', [\App\Http\Controllers\Admin\ActivityLogController::class, 'index'])->name('activity-logs.index');

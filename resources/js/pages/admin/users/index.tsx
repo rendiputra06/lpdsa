@@ -1,14 +1,14 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
+import { Edit, Plus, Search, X } from 'lucide-react';
+import React from 'react';
+import DeleteUserDialog from '@/components/delete-user-dialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import DeleteUserDialog from '@/components/delete-user-dialog';
-import { Edit, Plus, Search, X } from 'lucide-react';
-import React from 'react';
 
 export default function Index({ users }: any) {
     const { auth } = usePage<any>().props;
@@ -25,6 +25,7 @@ export default function Index({ users }: any) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (editingUser) {
             put(`/admin/users/${editingUser.id}`, {
                 onSuccess: () => {
@@ -91,6 +92,7 @@ export default function Index({ users }: any) {
                     </div>
                     <Dialog open={isDialogOpen} onOpenChange={(open) => {
                         setIsDialogOpen(open);
+
                         if (!open) {
                             setEditingUser(null);
                             reset();

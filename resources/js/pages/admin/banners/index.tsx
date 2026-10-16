@@ -1,13 +1,13 @@
 import { Head, useForm } from '@inertiajs/react';
+import { Edit, Trash, Plus, Upload, X, ImageIcon, Eye, GripVertical } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Edit, Trash, Plus, Upload, X, ImageIcon, Eye, GripVertical } from 'lucide-react';
-import React, { useRef, useState } from 'react';
 
 export default function Index({ banners }: any) {
     const [editingBanner, setEditingBanner] = React.useState<any>(null);
@@ -43,14 +43,21 @@ export default function Index({ banners }: any) {
     const handleRemoveImage = () => {
         setData('image', null);
         setPreviewImage(null);
+
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
     };
 
     const getImagePreview = () => {
-        if (previewImage) return previewImage;
-        if (editingBanner?.image_path) return `/storage/${editingBanner.image_path}`;
+        if (previewImage) {
+return previewImage;
+}
+
+        if (editingBanner?.image_path) {
+return `/storage/${editingBanner.image_path}`;
+}
+
         return null;
     };
 
@@ -116,6 +123,7 @@ export default function Index({ banners }: any) {
                 <h1 className="text-2xl font-bold">Banner Hero</h1>
                 <Dialog open={isDialogOpen} onOpenChange={(open) => {
                     setIsDialogOpen(open);
+
                     if (!open) {
                         setEditingBanner(null);
                         reset();
@@ -256,7 +264,7 @@ export default function Index({ banners }: any) {
 
             {/* Modern Card Layout */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {banners.map((banner: any, index: number) => (
+                {banners.map((banner: any) => (
                     <Card key={banner.id} className={`overflow-hidden hover:shadow-lg transition-shadow ${!banner.is_active ? 'opacity-75' : ''}`}>
                         {/* Image Preview */}
                         <div className="relative h-40 bg-slate-100 overflow-hidden group">

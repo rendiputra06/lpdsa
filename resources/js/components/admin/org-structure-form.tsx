@@ -1,9 +1,9 @@
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
 import { Trash2, Plus, GripVertical, Upload, X } from 'lucide-react';
 import { useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export default function OrgStructureForm({ data, onChange }: { data: any[], onChange: (data: any[]) => void }) {
     const fileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
@@ -32,6 +32,7 @@ export default function OrgStructureForm({ data, onChange }: { data: any[], onCh
         handlePhotoChange(index, null);
         // Clear file input
         const fileInput = fileInputRefs.current[`photo-${index}`];
+
         if (fileInput) {
             fileInput.value = '';
         }
@@ -41,9 +42,11 @@ export default function OrgStructureForm({ data, onChange }: { data: any[], onCh
         if (item.photo instanceof File) {
             return URL.createObjectURL(item.photo);
         }
+
         if (typeof item.photo === 'string' && item.photo) {
             return `/storage/${item.photo}`;
         }
+
         return null;
     };
 
