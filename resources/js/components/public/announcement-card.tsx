@@ -28,7 +28,7 @@ export default function AnnouncementCard({
     variant = 'grid',
     className = '',
 }: AnnouncementCardProps) {
-    const detailUrl = `/announcements/${announcement.slug}`;
+    const detailUrl = announcement?.slug ? `/announcements/${announcement.slug}` : '/announcements';
     const categoryName = announcement.category?.name || 'Umum';
     const dateFormatted = formatDate(announcement.published_at);
     const excerptText = getCardExcerpt(announcement);

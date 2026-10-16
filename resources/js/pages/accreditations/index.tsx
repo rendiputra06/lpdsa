@@ -656,19 +656,25 @@ export default function Index({ accreditations, stats, filters = {} }: Props) {
 
                                     <div className="flex items-center gap-1">
                                         {accreditations.links.map((link, idx) => (
-                                            <Link
-                                                key={idx}
-                                                href={link.url || '#'}
-                                                preserveScroll
-                                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                                                    link.active
-                                                        ? 'bg-brand-900 text-white font-bold'
-                                                        : !link.url
-                                                        ? 'text-slate-300 dark:text-neutral-600 cursor-not-allowed'
-                                                        : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800'
-                                                }`}
-                                                dangerouslySetInnerHTML={{ __html: link.label }}
-                                            />
+                                            !link.url ? (
+                                                <span
+                                                    key={idx}
+                                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                                    className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 dark:text-neutral-600 cursor-not-allowed select-none"
+                                                />
+                                            ) : (
+                                                <Link
+                                                    key={idx}
+                                                    href={link.url}
+                                                    preserveScroll
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                                                        link.active
+                                                            ? 'bg-brand-900 text-white font-bold'
+                                                            : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800'
+                                                    }`}
+                                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                                />
+                                            )
                                         ))}
                                     </div>
                                 </div>

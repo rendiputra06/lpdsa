@@ -8,7 +8,7 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event, className = '' }: EventCardProps) {
-    const detailUrl = `/announcements/${event.slug}`;
+    const detailUrl = event?.slug ? `/announcements/${event.slug}` : '/announcements';
     const eventDetail = event.event_detail;
     const dateSource = eventDetail?.start_at || event.published_at;
     const { day, month, year } = getDateBadgeParts(dateSource);

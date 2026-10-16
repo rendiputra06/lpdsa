@@ -301,7 +301,7 @@ return;
                                 <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-snug break-words">
                                     {featuredAnnouncement ? (
                                         <Link
-                                            href={`/announcements/${featuredAnnouncement.slug}`}
+                                            href={featuredAnnouncement.slug ? `/announcements/${featuredAnnouncement.slug}` : '/announcements'}
                                             className="hover:text-brand-700 dark:hover:text-gold-400 transition-colors break-words"
                                         >
                                             {featuredAnnouncement.title}

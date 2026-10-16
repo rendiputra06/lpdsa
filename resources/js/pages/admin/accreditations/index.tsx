@@ -721,19 +721,25 @@ export default function Index({ accreditations, stats, academicUnits, filters }:
                         </div>
                         <div className="flex items-center gap-1">
                             {accreditations.links.map((link, idx) => (
-                                <Link
-                                    key={idx}
-                                    href={link.url || '#'}
-                                    preserveScroll
-                                    className={`px-2.5 py-1 rounded text-xs transition-colors ${
-                                        link.active
-                                            ? 'bg-[#8B142C] text-white font-semibold'
-                                            : !link.url
-                                            ? 'text-slate-300 cursor-not-allowed'
-                                            : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
-                                    }`}
-                                    dangerouslySetInnerHTML={{ __html: link.label }}
-                                />
+                                !link.url ? (
+                                    <span
+                                        key={idx}
+                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                        className="px-2.5 py-1 rounded text-xs text-slate-300 dark:text-neutral-600 cursor-not-allowed select-none"
+                                    />
+                                ) : (
+                                    <Link
+                                        key={idx}
+                                        href={link.url}
+                                        preserveScroll
+                                        className={`px-2.5 py-1 rounded text-xs transition-colors ${
+                                            link.active
+                                                ? 'bg-[#8B142C] text-white font-semibold'
+                                                : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
+                                        }`}
+                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                    />
+                                )
                             ))}
                         </div>
                     </div>

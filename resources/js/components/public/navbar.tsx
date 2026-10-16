@@ -134,54 +134,82 @@ return true;
                                                                     <span>{col.label}</span>
                                                                 </div>
                                                                 <div className="space-y-1">
-                                                                    {col.children?.map((sub: any) => (
-                                                                        sub.type === 'external' ? (
-                                                                            <a
-                                                                                key={sub.id}
-                                                                                href={sub.url}
-                                                                                target="_blank"
-                                                                                rel="noopener noreferrer"
-                                                                                className="block px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:text-brand-700 hover:bg-slate-50 dark:text-neutral-300 dark:hover:text-gold-400 dark:hover:bg-neutral-800/60 transition-colors"
-                                                                            >
-                                                                                {sub.label}
-                                                                            </a>
-                                                                        ) : (
+                                                                    {col.children?.map((sub: any) => {
+                                                                        const subUrl = sub.url || '#';
+                                                                        if (sub.type === 'external') {
+                                                                            return (
+                                                                                <a
+                                                                                    key={sub.id}
+                                                                                    href={subUrl}
+                                                                                    target="_blank"
+                                                                                    rel="noopener noreferrer"
+                                                                                    className="block px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:text-brand-700 hover:bg-slate-50 dark:text-neutral-300 dark:hover:text-gold-400 dark:hover:bg-neutral-800/60 transition-colors"
+                                                                                >
+                                                                                    {sub.label}
+                                                                                </a>
+                                                                            );
+                                                                        }
+                                                                        if (sub.type === 'label' || !sub.url) {
+                                                                            return (
+                                                                                <span
+                                                                                    key={sub.id}
+                                                                                    className="block px-3 py-1.5 text-xs font-semibold text-slate-500 dark:text-neutral-400"
+                                                                                >
+                                                                                    {sub.label}
+                                                                                </span>
+                                                                            );
+                                                                        }
+                                                                        return (
                                                                             <Link
                                                                                 key={sub.id}
-                                                                                href={sub.url}
+                                                                                href={subUrl}
                                                                                 className="block px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:text-brand-700 hover:bg-slate-50 dark:text-neutral-300 dark:hover:text-gold-400 dark:hover:bg-neutral-800/60 transition-colors"
                                                                             >
                                                                                 {sub.label}
                                                                             </Link>
-                                                                        )
-                                                                    ))}
+                                                                        );
+                                                                    })}
                                                                 </div>
                                                             </div>
                                                         ))}
                                                     </div>
                                                 ) : (
                                                     <div className="space-y-1">
-                                                        {menu.children.map((child: any) => (
-                                                            child.type === 'external' ? (
-                                                                <a
-                                                                    key={child.id}
-                                                                    href={child.url}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="block px-3.5 py-2.5 text-sm font-medium rounded-lg text-slate-700 hover:text-brand-700 hover:bg-slate-50 dark:text-neutral-200 dark:hover:text-gold-400 dark:hover:bg-neutral-800/70 transition-colors"
-                                                                >
-                                                                    {child.label}
-                                                                </a>
-                                                            ) : (
+                                                        {menu.children.map((child: any) => {
+                                                            const childUrl = child.url || '#';
+                                                            if (child.type === 'external') {
+                                                                return (
+                                                                    <a
+                                                                        key={child.id}
+                                                                        href={childUrl}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="block px-3.5 py-2.5 text-sm font-medium rounded-lg text-slate-700 hover:text-brand-700 hover:bg-slate-50 dark:text-neutral-200 dark:hover:text-gold-400 dark:hover:bg-neutral-800/70 transition-colors"
+                                                                    >
+                                                                        {child.label}
+                                                                    </a>
+                                                                );
+                                                            }
+                                                            if (child.type === 'label' || !child.url) {
+                                                                return (
+                                                                    <span
+                                                                        key={child.id}
+                                                                        className="block px-3.5 py-2 text-xs font-bold uppercase tracking-wider text-brand-700 dark:text-gold-400"
+                                                                    >
+                                                                        {child.label}
+                                                                    </span>
+                                                                );
+                                                            }
+                                                            return (
                                                                 <Link
                                                                     key={child.id}
-                                                                    href={child.url}
+                                                                    href={childUrl}
                                                                     className="block px-3.5 py-2.5 text-sm font-medium rounded-lg text-slate-700 hover:text-brand-700 hover:bg-slate-50 dark:text-neutral-200 dark:hover:text-gold-400 dark:hover:bg-neutral-800/70 transition-colors"
                                                                 >
                                                                     {child.label}
                                                                 </Link>
-                                                            )
-                                                        ))}
+                                                            );
+                                                        })}
                                                     </div>
                                                 )}
                                             </div>
@@ -190,20 +218,34 @@ return true;
                                 );
                             }
 
-                            return menu.type === 'external' ? (
-                                <a
-                                    key={menu.id}
-                                    href={menu.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-3.5 py-2 text-sm font-semibold rounded-lg text-slate-700 hover:text-brand-700 hover:bg-slate-50 dark:text-neutral-300 dark:hover:text-gold-400 dark:hover:bg-neutral-900 transition-colors"
-                                >
-                                    {menu.label}
-                                </a>
-                            ) : (
+                            const menuUrl = menu.url || '#';
+                            if (menu.type === 'external') {
+                                return (
+                                    <a
+                                        key={menu.id}
+                                        href={menuUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-3.5 py-2 text-sm font-semibold rounded-lg text-slate-700 hover:text-brand-700 hover:bg-slate-50 dark:text-neutral-300 dark:hover:text-gold-400 dark:hover:bg-neutral-900 transition-colors"
+                                    >
+                                        {menu.label}
+                                    </a>
+                                );
+                            }
+                            if (menu.type === 'label' || !menu.url) {
+                                return (
+                                    <span
+                                        key={menu.id}
+                                        className="px-3.5 py-2 text-sm font-semibold text-slate-500 dark:text-neutral-400"
+                                    >
+                                        {menu.label}
+                                    </span>
+                                );
+                            }
+                            return (
                                 <Link
                                     key={menu.id}
-                                    href={menu.url}
+                                    href={menuUrl}
                                     className={`px-3.5 py-2 text-sm font-semibold rounded-lg transition-colors ${
                                         active
                                             ? 'text-brand-700 dark:text-gold-400 bg-brand-50/70 dark:bg-neutral-900'
@@ -309,47 +351,79 @@ return true;
                                                                     {child.label}
                                                                 </span>
                                                                 <div className="pl-2 space-y-1 border-l-2 border-brand-100 dark:border-neutral-800">
-                                                                    {child.children.map((sub: any) => (
-                                                                        sub.type === 'external' ? (
-                                                                            <a
-                                                                                key={sub.id}
-                                                                                href={sub.url}
-                                                                                target="_blank"
-                                                                                rel="noopener noreferrer"
-                                                                                className="block py-1 text-sm text-slate-600 dark:text-neutral-400"
-                                                                            >
-                                                                                {sub.label}
-                                                                            </a>
-                                                                        ) : (
+                                                                    {child.children.map((sub: any) => {
+                                                                        const subUrl = sub.url || '#';
+                                                                        if (sub.type === 'external') {
+                                                                            return (
+                                                                                <a
+                                                                                    key={sub.id}
+                                                                                    href={subUrl}
+                                                                                    target="_blank"
+                                                                                    rel="noopener noreferrer"
+                                                                                    className="block py-1 text-sm text-slate-600 dark:text-neutral-400"
+                                                                                >
+                                                                                    {sub.label}
+                                                                                </a>
+                                                                            );
+                                                                        }
+                                                                        if (sub.type === 'label' || !sub.url) {
+                                                                            return (
+                                                                                <span
+                                                                                    key={sub.id}
+                                                                                    className="block py-1 text-xs font-semibold text-slate-500 dark:text-neutral-400"
+                                                                                >
+                                                                                    {sub.label}
+                                                                                </span>
+                                                                            );
+                                                                        }
+                                                                        return (
                                                                             <Link
                                                                                 key={sub.id}
-                                                                                href={sub.url}
+                                                                                href={subUrl}
                                                                                 className="block py-1 text-sm text-slate-600 dark:text-neutral-400"
                                                                             >
                                                                                 {sub.label}
                                                                             </Link>
-                                                                        )
-                                                                    ))}
+                                                                        );
+                                                                    })}
                                                                 </div>
                                                             </div>
                                                         ) : (
-                                                            child.type === 'external' ? (
-                                                                <a
-                                                                    href={child.url}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="block py-1.5 text-sm text-slate-700 dark:text-neutral-300 font-medium"
-                                                                >
-                                                                    {child.label}
-                                                                </a>
-                                                            ) : (
-                                                                <Link
-                                                                    href={child.url}
-                                                                    className="block py-1.5 text-sm text-slate-700 dark:text-neutral-300 font-medium"
-                                                                >
-                                                                    {child.label}
-                                                                </Link>
-                                                            )
+                                                            (() => {
+                                                                const childUrl = child.url || '#';
+                                                                if (child.type === 'external') {
+                                                                    return (
+                                                                        <a
+                                                                            key={child.id}
+                                                                            href={childUrl}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="block py-1.5 text-sm text-slate-700 dark:text-neutral-300 font-medium"
+                                                                        >
+                                                                            {child.label}
+                                                                        </a>
+                                                                    );
+                                                                }
+                                                                if (child.type === 'label' || !child.url) {
+                                                                    return (
+                                                                        <span
+                                                                            key={child.id}
+                                                                            className="block py-1.5 text-xs font-bold uppercase tracking-wider text-brand-700 dark:text-gold-400"
+                                                                        >
+                                                                            {child.label}
+                                                                        </span>
+                                                                    );
+                                                                }
+                                                                return (
+                                                                    <Link
+                                                                        key={child.id}
+                                                                        href={childUrl}
+                                                                        className="block py-1.5 text-sm text-slate-700 dark:text-neutral-300 font-medium"
+                                                                    >
+                                                                        {child.label}
+                                                                    </Link>
+                                                                );
+                                                            })()
                                                         )}
                                                     </div>
                                                 ))}
@@ -359,20 +433,34 @@ return true;
                                 );
                             }
 
-                            return menu.type === 'external' ? (
-                                <a
-                                    key={menu.id}
-                                    href={menu.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="block py-2 text-base font-semibold text-slate-800 dark:text-neutral-200"
-                                >
-                                    {menu.label}
-                                </a>
-                            ) : (
+                            const menuUrl = menu.url || '#';
+                            if (menu.type === 'external') {
+                                return (
+                                    <a
+                                        key={menu.id}
+                                        href={menuUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="block py-2 text-base font-semibold text-slate-800 dark:text-neutral-200"
+                                    >
+                                        {menu.label}
+                                    </a>
+                                );
+                            }
+                            if (menu.type === 'label' || !menu.url) {
+                                return (
+                                    <span
+                                        key={menu.id}
+                                        className="block py-2 text-base font-semibold text-slate-500 dark:text-neutral-400"
+                                    >
+                                        {menu.label}
+                                    </span>
+                                );
+                            }
+                            return (
                                 <Link
                                     key={menu.id}
-                                    href={menu.url}
+                                    href={menuUrl}
                                     className="block py-2 text-base font-semibold text-slate-800 dark:text-neutral-200"
                                 >
                                     {menu.label}
