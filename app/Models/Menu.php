@@ -26,4 +26,31 @@ class Menu extends Model
     {
         return $this->hasMany(Menu::class, 'parent_id')->orderBy('order');
     }
+
+    public function childrenRecursive()
+    {
+        return $this->children()->with('childrenRecursive');
+    }
+
+    public function scopeTree($query)
+    {
+        return $query->with([
+            'children' => fn ($q) => $q->orderBy('order'),
+            'children.children' => fn ($q) => $q->orderBy('order'),
+            'children.children.children' => fn ($q) => $q->orderBy('order'),
+            'children.children.children.children' => fn ($q) => $q->orderBy('order'),
+        ]);
+    }
+
+    public function getDepthAttribute(): int
+    {
+        $depth = 1;
+        $parent = $this->parent;
+        while ($parent) {
+            $depth++;
+            $parent = $parent->parent;
+        }
+
+        return $depth;
+    }
 }

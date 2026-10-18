@@ -12,17 +12,10 @@ class MenuController extends Controller
 {
     public function index()
     {
-        $menus = Menu::with([
-            'children' => function ($q) {
-                $q->orderBy('order');
-            },
-            'children.children' => function ($q) {
-                $q->orderBy('order');
-            },
-        ])
-        ->whereNull('parent_id')
-        ->orderBy('order')
-        ->get();
+        $menus = Menu::tree()
+            ->whereNull('parent_id')
+            ->orderBy('order')
+            ->get();
 
         $staticPages = StaticPage::select('id', 'title', 'slug')
             ->orderBy('title')
@@ -61,8 +54,17 @@ class MenuController extends Controller
             'type.required' => 'Tipe menu wajib dipilih.',
         ]);
 
-        if ($validated['type'] !== 'label' && empty($validated['url'])) {
-            return redirect()->back()->withErrors(['url' => 'URL / Path tujuan wajib diisi untuk menu tautan.']);
+        $isRootDropdown = empty($validated['parent_id']) && empty($validated['url']);
+        if ($validated['type'] !== 'label' && !$isRootDropdown && empty($validated['url'])) {
+            return redirect()->back()->withErrors(['url' => 'URL / Path tujuan wajib diisi untuk menu tautan (kecuali menu induk dropdown).']);
+        }
+
+        // Validate max depth (level 4)
+        if (!empty($validated['parent_id'])) {
+            $parent = Menu::find($validated['parent_id']);
+            if ($parent && $parent->depth >= 4) {
+                return redirect()->back()->withErrors(['parent_id' => 'Struktur menu maksimal 4 tingkat. Induk yang dipilih sudah berada pada level 4.']);
+            }
         }
 
         // Auto assign next order if not set
@@ -89,11 +91,13 @@ class MenuController extends Controller
             'type.required' => 'Tipe menu wajib dipilih.',
         ]);
 
-        if ($validated['type'] !== 'label' && empty($validated['url'])) {
+        $hasChildren = $menu->children()->exists();
+        $isRootDropdown = empty($validated['parent_id']) && empty($validated['url']);
+        if ($validated['type'] !== 'label' && !$hasChildren && !$isRootDropdown && empty($validated['url'])) {
             return redirect()->back()->withErrors(['url' => 'URL / Path tujuan wajib diisi untuk menu tautan.']);
         }
 
-        // Prevent cyclic loop
+        // Prevent cyclic loop and check max depth
         if (!empty($validated['parent_id'])) {
             if ($validated['parent_id'] == $menu->id) {
                 return redirect()->back()->withErrors(['parent_id' => 'Menu tidak dapat menjadikan dirinya sendiri sebagai induk.']);
@@ -102,6 +106,14 @@ class MenuController extends Controller
             $descendantIds = $this->getDescendantIds($menu);
             if (in_array($validated['parent_id'], $descendantIds)) {
                 return redirect()->back()->withErrors(['parent_id' => 'Menu tidak dapat memilih sub-menu bawahannya sebagai induk (cyclic loop).']);
+            }
+
+            $parent = Menu::find($validated['parent_id']);
+            if ($parent) {
+                $maxOffset = $this->getMaxDescendantDepthOffset($menu);
+                if ($parent->depth + $maxOffset > 4) {
+                    return redirect()->back()->withErrors(['parent_id' => 'Struktur menu maksimal 4 tingkat. Perpindahan ini akan menyebabkan sub-menu melebihi level 4.']);
+                }
             }
         }
 
@@ -188,5 +200,20 @@ class MenuController extends Controller
         $menu->delete();
 
         return $count;
+    }
+
+    private function getMaxDescendantDepthOffset(Menu $menu): int
+    {
+        $children = Menu::where('parent_id', $menu->id)->get();
+        if ($children->isEmpty()) {
+            return 1;
+        }
+
+        $maxChildOffset = 0;
+        foreach ($children as $child) {
+            $maxChildOffset = max($maxChildOffset, $this->getMaxDescendantDepthOffset($child));
+        }
+
+        return 1 + $maxChildOffset;
     }
 }

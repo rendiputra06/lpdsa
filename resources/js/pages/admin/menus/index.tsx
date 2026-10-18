@@ -171,8 +171,9 @@ export default function MenuIndex({
                     isLastInGroup: isLast,
                 });
 
-                if (item.children && item.children.length > 0) {
-                    walk(item.children, depth + 1, item.label);
+                const itemChildren = item.children || (item as any).children_recursive || [];
+                if (itemChildren && itemChildren.length > 0) {
+                    walk(itemChildren, depth + 1, item.label);
                 }
             });
         };
@@ -601,13 +602,21 @@ export default function MenuIndex({
 
                                                     {/* Hierarchy Depth Badge */}
                                                     <TableCell className="py-3 px-4 text-center">
-                                                        {isRoot ? (
+                                                        {item.depth === 1 ? (
                                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-brand-50 text-[#8B142C] dark:bg-brand-950/80 dark:text-gold-300 border border-brand-200/60 dark:border-brand-800/80">
-                                                                Menu Utama
+                                                                Level 1 (Utama)
+                                                            </span>
+                                                        ) : item.depth === 2 ? (
+                                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                                                                Level 2
+                                                            </span>
+                                                        ) : item.depth === 3 ? (
+                                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                                                Level 3
                                                             </span>
                                                         ) : (
-                                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                                                                Sub-Menu
+                                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                                                Level 4
                                                             </span>
                                                         )}
                                                     </TableCell>
@@ -662,14 +671,14 @@ export default function MenuIndex({
                                                     {/* Actions */}
                                                     <TableCell className="py-3 px-4 text-right">
                                                         <div className="flex items-center justify-end gap-1.5">
-                                                            {/* Add sub-menu button (only for root) */}
-                                                            {isRoot && (
+                                                            {/* Add sub-menu button (for items with depth < 4) */}
+                                                            {item.depth < 4 && (
                                                                 <Button
                                                                     variant="ghost"
                                                                     size="icon"
                                                                     onClick={() => handleOpenCreateDialog(item.id)}
                                                                     className="h-8 w-8 rounded-lg text-slate-600 dark:text-neutral-300 hover:text-[#8B142C] dark:hover:text-gold-400 hover:bg-brand-50 dark:hover:bg-brand-950/50"
-                                                                    title="Tambah Sub-Menu di Bawah Ini"
+                                                                    title={`Tambah Sub-Menu di Bawah Ini (Level ${item.depth + 1})`}
                                                                 >
                                                                     <FolderPlus className="h-4 w-4" />
                                                                 </Button>
@@ -963,15 +972,29 @@ export default function MenuIndex({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="none" className="font-bold">
-                                        Tidak Ada (Sebagai Menu Utama / Baris Atas)
+                                        Tidak Ada (Sebagai Menu Utama / Level 1)
                                     </SelectItem>
-                                    {menus
-                                        .filter((m) => !m.parent_id && (!editingMenu || m.id !== editingMenu.id))
-                                        .map((m) => (
-                                            <SelectItem key={m.id} value={m.id.toString()} className="font-semibold text-brand-700 dark:text-gold-400">
-                                                ● {m.label} (Menu Utama)
-                                            </SelectItem>
-                                        ))}
+                                    {flattenedList
+                                        .filter((m) => {
+                                            if (m.depth >= 4) return false;
+                                            if (editingMenu) {
+                                                if (m.id === editingMenu.id) return false;
+                                                const descendantIds = getDescendantIds(editingMenu.id);
+                                                if (descendantIds.includes(m.id)) return false;
+                                            }
+                                            return true;
+                                        })
+                                        .map((m) => {
+                                            const prefix = m.depth === 1 ? '● ' : m.depth === 2 ? '　└─ ' : '　　└─ ';
+                                            return (
+                                                <SelectItem key={m.id} value={m.id.toString()} className="font-medium text-xs">
+                                                    <span className="font-mono text-slate-400">{prefix}</span>
+                                                    <span className={m.depth === 1 ? 'font-bold text-brand-700 dark:text-gold-400' : 'text-slate-700 dark:text-neutral-200'}>
+                                                        {m.label} (Level {m.depth})
+                                                    </span>
+                                                </SelectItem>
+                                            );
+                                        })}
                                 </SelectContent>
                             </Select>
                             {errors.parent_id && (
