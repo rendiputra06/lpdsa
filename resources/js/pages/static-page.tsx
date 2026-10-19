@@ -1,9 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
-import { Clock, Printer, FileText, ArrowRight, ExternalLink } from 'lucide-react';
+import { FileText, ArrowRight, ExternalLink } from 'lucide-react';
 import DocumentsViewer from '@/components/public/documents-viewer';
 import OrgStructureViewer from '@/components/public/org-structure-viewer';
 import PageHero from '@/components/public/page-hero';
-import { formatDate } from '@/lib/format';
 
 interface StaticPageProps {
     page: any;
@@ -11,8 +10,6 @@ interface StaticPageProps {
 }
 
 export default function StaticPage({ page, otherPages = [] }: StaticPageProps) {
-    const updatedDateFormatted = formatDate(page.updated_at);
-
     return (
         <>
             <Head title={page.title}>
@@ -29,12 +26,6 @@ export default function StaticPage({ page, otherPages = [] }: StaticPageProps) {
                 ]}
                 eyebrow="PROFIL & REGULASI"
                 title={page.title}
-                meta={
-                    <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-500 dark:text-neutral-400">
-                        <Clock className="h-4 w-4 text-brand-700 dark:text-gold-400" />
-                        <span>Terakhir diperbarui: {updatedDateFormatted}</span>
-                    </div>
-                }
             />
 
             {/* Page Content & Navigation Sidebar */}
@@ -62,18 +53,10 @@ export default function StaticPage({ page, otherPages = [] }: StaticPageProps) {
                             )}
 
                             {/* Footer inside card */}
-                            <div className="mt-12 pt-6 border-t border-slate-100 dark:border-neutral-800 flex items-center justify-between text-xs text-slate-500 dark:text-neutral-400">
+                            <div className="mt-12 pt-6 border-t border-slate-100 dark:border-neutral-800 text-xs text-slate-500 dark:text-neutral-400">
                                 <span className="font-medium italic">
                                     Lembaga Pangkalan Data, SPMI, dan Akreditasi Universitas Abdurrab
                                 </span>
-                                <button
-                                    type="button"
-                                    onClick={() => window.print()}
-                                    className="inline-flex items-center gap-1.5 font-bold text-brand-700 dark:text-gold-400 hover:underline cursor-pointer"
-                                >
-                                    <Printer className="h-4 w-4" />
-                                    <span>Cetak Halaman</span>
-                                </button>
                             </div>
                         </main>
 

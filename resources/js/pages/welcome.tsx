@@ -140,7 +140,7 @@ return;
 
                             <div className="flex flex-wrap items-center gap-3 pt-2">
                                 <Link
-                                    href="/profil"
+                                    href="/about"
                                     className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-brand-900 font-bold text-sm hover:bg-gold-400 hover:text-neutral-950 transition-all shadow-lg hover:scale-102"
                                 >
                                     <span>Tentang LPDSA</span>

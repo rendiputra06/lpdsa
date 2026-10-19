@@ -429,12 +429,25 @@ export default function Navbar() {
 
     useEffect(() => {
         const handleScroll = () => {
-            setScrolled(window.scrollY > 20);
+            setScrolled(window.scrollY > 40);
         };
         window.addEventListener('scroll', handleScroll, { passive: true });
 
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    // Lock body scroll when mobile drawer is open
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isOpen]);
 
     // Close mobile menu & dropdown on route change
     useEffect(() => {
@@ -488,28 +501,48 @@ export default function Navbar() {
             className={`sticky top-0 z-50 w-full transition-all duration-300 ${
                 scrolled
                     ? 'bg-white/95 dark:bg-neutral-950/95 backdrop-blur-md shadow-md border-b border-slate-200/80 dark:border-neutral-800'
-                    : 'bg-white dark:bg-neutral-950 border-b border-slate-200/60 dark:border-neutral-800/80'
+                    : 'bg-white/95 dark:bg-neutral-950/95 backdrop-blur-xs border-b border-slate-200/60 dark:border-neutral-800/80'
             }`}
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex h-20 items-center justify-between gap-4">
-                    {/* Brand Logo */}
-                    <div className="flex items-center shrink-0">
-                        <Link href="/" className="flex items-center gap-3 group">
-                            <AppLogo className="h-11 w-11 rounded-xl shadow-xs group-hover:scale-105 transition-transform" />
+                <div className={`flex items-center justify-between gap-4 transition-all duration-300 ${scrolled ? 'h-15' : 'h-16'}`}>
+                    {/* Mobile Brand Logo (Visible only on mobile since desktop brand is in TopBar) */}
+                    <div className="flex items-center shrink-0 lg:hidden">
+                        <Link href="/" className="flex items-center gap-2.5 group">
+                            <AppLogo className="h-9 w-9 rounded-xl shadow-xs group-hover:scale-105 transition-transform" />
                             <div className="flex flex-col">
-                                <span className="text-xl font-black tracking-tight text-brand-700 dark:text-gold-400 group-hover:text-brand-800 transition-colors">
+                                <span className="text-base font-black tracking-tight text-brand-700 dark:text-gold-400 group-hover:text-brand-800 transition-colors leading-tight">
                                     {settings?.app_name || 'LPDSA'}
                                 </span>
-                                <span className="text-[10px] font-bold tracking-wider uppercase text-slate-500 dark:text-neutral-400 line-clamp-1">
+                                <span className="text-[9px] font-bold tracking-wider uppercase text-slate-500 dark:text-neutral-400 leading-none">
                                     Universitas Abdurrab
                                 </span>
                             </div>
                         </Link>
                     </div>
 
-                    {/* Desktop Navigation Menu */}
-                    <nav aria-label="Menu navigasi utama" className="hidden lg:flex items-center space-x-1">
+                    {/* Desktop Left: Scrolled Compact Brand + Desktop Navigation */}
+                    <div className="hidden lg:flex items-center gap-2 min-w-0">
+                        {/* Compact Brand shown ONLY when scrolled down past TopBar */}
+                        {scrolled && (
+                            <Link
+                                href="/"
+                                className="flex items-center gap-2.5 mr-3 pr-3.5 border-r border-slate-200 dark:border-neutral-800 shrink-0 group transition-all duration-300"
+                            >
+                                <AppLogo className="h-8 w-8 rounded-lg shadow-xs group-hover:scale-105 transition-transform" />
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-black tracking-tight text-brand-700 dark:text-gold-400 group-hover:text-brand-800 transition-colors leading-none">
+                                        {settings?.app_name || 'LPDSA'}
+                                    </span>
+                                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-neutral-500 leading-none mt-0.5">
+                                        Univrab
+                                    </span>
+                                </div>
+                            </Link>
+                        )}
+
+                        {/* Desktop Navigation Menu */}
+                        <nav aria-label="Menu navigasi utama" className="flex items-center space-x-1">
                         {menus?.map((menu: any) => {
                             const children = getChildren(menu);
                             const hasChildren = children.length > 0;
@@ -633,10 +666,11 @@ export default function Navbar() {
                                 </Link>
                             );
                         })}
-                    </nav>
+                        </nav>
+                    </div>
 
                     {/* Right side: Search, Theme Toggle, CTA */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 shrink-0">
                         {/* Quick Search to announcements */}
                         <Link
                             href="/announcements"
@@ -694,10 +728,16 @@ export default function Navbar() {
                 </div>
             </div>
 
-            {/* Mobile Navigation Drawer */}
+            {/* Mobile Navigation Drawer with Backdrop */}
             {isOpen && (
-                <div className="lg:hidden bg-white/98 dark:bg-neutral-950/98 border-b border-slate-200 dark:border-neutral-800 shadow-xl max-h-[calc(100vh-5rem)] overflow-y-auto">
-                    <div className="px-4 py-4 space-y-2">
+                <>
+                    <div
+                        onClick={() => setIsOpen(false)}
+                        className="fixed inset-0 top-16 bg-black/40 backdrop-blur-xs z-40 lg:hidden"
+                        aria-hidden="true"
+                    />
+                    <div className="relative z-50 lg:hidden bg-white/98 dark:bg-neutral-950/98 border-b border-slate-200 dark:border-neutral-800 shadow-xl max-h-[calc(100vh-4.5rem)] overflow-y-auto">
+                        <div className="px-4 py-4 space-y-2">
                         {menus?.map((menu: any) => {
                             const children = getChildren(menu);
                             const hasChildren = children.length > 0;
@@ -888,6 +928,7 @@ export default function Navbar() {
                         </div>
                     </div>
                 </div>
+            </>
             )}
         </header>
     );
