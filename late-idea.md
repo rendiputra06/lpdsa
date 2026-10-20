@@ -1,6 +1,5 @@
 - daftarkan SEO google
 - tombol ke halaman portal utama univrab
-- struktur organisasi bergaris
-- detail profil modal isi wewenang dan tanggung jawab
+- [x] struktur organisasi bergaris (selesai)
+- [x] detail profil modal isi wewenang dan tanggung jawab (selesai)
 - hilangkan tanggal update
-- 

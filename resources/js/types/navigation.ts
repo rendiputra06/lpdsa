@@ -11,4 +11,17 @@ export type NavItem = {
     href: NonNullable<InertiaLinkProps['href']>;
     icon?: LucideIcon | null;
     isActive?: boolean;
+    badge?: string | number;
+    action?: {
+        icon: LucideIcon;
+        href: NonNullable<InertiaLinkProps['href']>;
+        title: string;
+    };
+    role?: 'super_admin' | 'admin';
+};
+
+export type NavGroup = {
+    title?: string;
+    items: NavItem[];
+    role?: 'super_admin' | 'admin';
 };

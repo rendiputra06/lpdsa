@@ -1,17 +1,18 @@
 import { Link } from '@inertiajs/react';
 import {
+    Award,
+    FileText,
+    Globe,
+    GraduationCap,
+    History,
+    Image as ImageIcon,
     LayoutGrid,
     Megaphone,
-    Tags,
     Menu as MenuIcon,
-    Users,
-    FileText,
-    Image as ImageIcon,
-    History,
-    Globe,
+    Plus,
     Settings,
-    Award,
-    GraduationCap,
+    Tags,
+    Users,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -27,63 +28,91 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import type { NavItem } from '@/types';
+import admin from '@/routes/admin';
+import type { NavGroup, NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
+const navGroups: NavGroup[] = [
     {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
+        title: 'Utama',
+        items: [
+            {
+                title: 'Dashboard',
+                href: dashboard(),
+                icon: LayoutGrid,
+            },
+        ],
     },
     {
-        title: 'Pengumuman',
-        href: '/admin/announcements',
-        icon: Megaphone,
+        title: 'Pangkalan Data & Mutu',
+        items: [
+            {
+                title: 'Data Akreditasi',
+                href: admin.accreditations.index(),
+                icon: Award,
+            },
+            {
+                title: 'Unit Akademik',
+                href: admin.academicUnits.index(),
+                icon: GraduationCap,
+            },
+        ],
     },
     {
-        title: 'Kategori',
-        href: '/admin/categories',
-        icon: Tags,
+        title: 'Publikasi & CMS',
+        items: [
+            {
+                title: 'Pengumuman',
+                href: admin.announcements.index(),
+                icon: Megaphone,
+                action: {
+                    icon: Plus,
+                    href: admin.announcements.create(),
+                    title: 'Tambah Pengumuman',
+                },
+            },
+            {
+                title: 'Kategori',
+                href: admin.categories.index(),
+                icon: Tags,
+            },
+            {
+                title: 'Banner Hero',
+                href: admin.banners.index(),
+                icon: ImageIcon,
+            },
+            {
+                title: 'Halaman Statis',
+                href: admin.staticPages.index(),
+                icon: FileText,
+            },
+            {
+                title: 'Menu Navigasi',
+                href: admin.menus.index(),
+                icon: MenuIcon,
+            },
+        ],
     },
     {
-        title: 'Data Akreditasi',
-        href: '/admin/accreditations',
-        icon: Award,
-    },
-    {
-        title: 'Unit Akademik',
-        href: '/admin/academic-units',
-        icon: GraduationCap,
-    },
-    {
-        title: 'Menu Navigasi',
-        href: '/admin/menus',
-        icon: MenuIcon,
-    },
-    {
-        title: 'Halaman Statis',
-        href: '/admin/static-pages',
-        icon: FileText,
-    },
-    {
-        title: 'Banner Hero',
-        href: '/admin/banners',
-        icon: ImageIcon,
-    },
-    {
-        title: 'Pengguna',
-        href: '/admin/users',
-        icon: Users,
-    },
-    {
-        title: 'Log Aktivitas',
-        href: '/admin/activity-logs',
-        icon: History,
-    },
-    {
-        title: 'Pengaturan',
-        href: '/admin/settings',
-        icon: Settings,
+        title: 'Sistem & Konfigurasi',
+        items: [
+            {
+                title: 'Pengguna',
+                href: admin.users.index(),
+                icon: Users,
+                role: 'super_admin',
+            },
+            {
+                title: 'Log Aktivitas',
+                href: admin.activityLogs.index(),
+                icon: History,
+            },
+            {
+                title: 'Pengaturan',
+                href: admin.settings.index(),
+                icon: Settings,
+                role: 'super_admin',
+            },
+        ],
     },
 ];
 
@@ -103,7 +132,7 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
                             <Link href={dashboard()} prefetch>
-                                <AppLogo />
+                                <AppLogo showText />
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -111,7 +140,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain groups={navGroups} />
             </SidebarContent>
 
             <SidebarFooter>

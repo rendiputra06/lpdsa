@@ -13,6 +13,11 @@ export type IsCurrentOrParentUrlFn = (
     currentUrl?: string,
 ) => boolean;
 
+export type IsCurrentModuleUrlFn = (
+    urlToCheck: NonNullable<InertiaLinkProps['href']>,
+    currentUrl?: string,
+) => boolean;
+
 export type WhenCurrentUrlFn = <TIfTrue, TIfFalse = null>(
     urlToCheck: NonNullable<InertiaLinkProps['href']>,
     ifTrue: TIfTrue,
@@ -23,6 +28,7 @@ export type UseCurrentUrlReturn = {
     currentUrl: string;
     isCurrentUrl: IsCurrentUrlFn;
     isCurrentOrParentUrl: IsCurrentOrParentUrlFn;
+    isCurrentModuleUrl: IsCurrentModuleUrlFn;
     whenCurrentUrl: WhenCurrentUrlFn;
 };
 
@@ -66,6 +72,39 @@ export function useCurrentUrl(): UseCurrentUrlReturn {
         return isCurrentUrl(urlToCheck, currentUrl, true);
     };
 
+    const isCurrentModuleUrl: IsCurrentModuleUrlFn = (
+        urlToCheck: NonNullable<InertiaLinkProps['href']>,
+        currentUrl?: string,
+    ) => {
+        const urlToCompare = currentUrl ?? currentUrlPath;
+        const urlString = toUrl(urlToCheck);
+        let targetPath = urlString;
+
+        if (urlString.startsWith('http')) {
+            try {
+                targetPath = new URL(urlString).pathname;
+            } catch {
+                targetPath = urlString;
+            }
+        } else {
+            targetPath = urlString.split('?')[0].split('#')[0];
+        }
+
+        if (urlToCompare === targetPath) {
+            return true;
+        }
+
+        if (
+            targetPath === '/' ||
+            targetPath === '/admin' ||
+            targetPath === '/dashboard'
+        ) {
+            return urlToCompare === targetPath;
+        }
+
+        return urlToCompare.startsWith(targetPath + '/');
+    };
+
     const whenCurrentUrl: WhenCurrentUrlFn = <TIfTrue, TIfFalse = null>(
         urlToCheck: NonNullable<InertiaLinkProps['href']>,
         ifTrue: TIfTrue,
@@ -78,6 +117,7 @@ export function useCurrentUrl(): UseCurrentUrlReturn {
         currentUrl: currentUrlPath,
         isCurrentUrl,
         isCurrentOrParentUrl,
+        isCurrentModuleUrl,
         whenCurrentUrl,
     };
 }
