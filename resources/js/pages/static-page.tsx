@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { FileText, ArrowRight, ExternalLink } from 'lucide-react';
 import DocumentsViewer from '@/components/public/documents-viewer';
 import OrgStructureViewer from '@/components/public/org-structure-viewer';
@@ -12,12 +12,70 @@ interface StaticPageProps {
 export default function StaticPage({ page, otherPages = [] }: StaticPageProps) {
     const isOrgStructure = page.type === 'org_structure';
 
+    const inertiaPage = usePage();
+    const sharedProps = inertiaPage.props as Record<string, any>;
+    const settings = sharedProps.settings || {};
+    const baseUrl = sharedProps.appUrl || 'http://localhost:8000';
+
+    const rawLogo = settings.app_logo ? `/storage/${settings.app_logo}` : '/apple-touch-icon.png';
+    const absoluteLogo = rawLogo.startsWith('http') ? rawLogo : `${baseUrl}${rawLogo.startsWith('/') ? '' : '/'}${rawLogo}`;
+    const canonicalUrl = `${baseUrl}/${page.slug}`;
+
+    const pageTitle = page.title;
+    const pageDescription = page.meta_description || `${page.title} - Lembaga Pangkalan Data, SPMI, dan Akreditasi Universitas Abdurrab.`;
+
+    const jsonLd = [
+        {
+            '@context': 'https://schema.org',
+            '@type': 'WebPage',
+            name: page.title,
+            description: pageDescription,
+            url: canonicalUrl,
+            publisher: {
+                '@type': 'Organization',
+                name: 'LPDSA Universitas Abdurrab',
+                url: 'https://univrab.ac.id',
+            },
+        },
+        {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+                {
+                    '@type': 'ListItem',
+                    position: 1,
+                    name: 'Beranda',
+                    item: `${baseUrl}/`,
+                },
+                {
+                    '@type': 'ListItem',
+                    position: 2,
+                    name: page.title,
+                    item: canonicalUrl,
+                },
+            ],
+        },
+    ];
+
     return (
         <>
-            <Head title={page.title}>
-                <meta name="description" content={page.meta_description || `${page.title} - LPDSA Universitas Abdurrab`} />
-                <meta property="og:title" content={`${page.title} - LPDSA Universitas Abdurrab`} />
+            <Head title={pageTitle}>
+                <meta name="description" content={pageDescription} />
+                <link rel="canonical" href={canonicalUrl} />
+                <meta property="og:site_name" content={settings.app_name || 'LPDSA Universitas Abdurrab'} />
+                <meta property="og:title" content={`${pageTitle} - ${settings.app_name || 'LPDSA Universitas Abdurrab'}`} />
+                <meta property="og:description" content={pageDescription} />
                 <meta property="og:type" content="website" />
+                <meta property="og:url" content={canonicalUrl} />
+                <meta property="og:image" content={absoluteLogo} />
+                <meta property="og:locale" content="id_ID" />
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={`${pageTitle} - ${settings.app_name || 'LPDSA Universitas Abdurrab'}`} />
+                <meta name="twitter:description" content={pageDescription} />
+                <meta name="twitter:image" content={absoluteLogo} />
+                <script type="application/ld+json">
+                    {JSON.stringify(jsonLd)}
+                </script>
             </Head>
 
             {/* Page Hero matching Univrab Inner Page Layout */}

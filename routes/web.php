@@ -10,6 +10,7 @@ Route::get('/announcements', [LandingController::class, 'announcements'])->name(
 Route::get('/announcements/{slug}', [LandingController::class, 'showAnnouncement'])->name('announcements.show');
 Route::get('/akreditasi', [LandingController::class, 'accreditations'])->name('accreditations.index');
 Route::get('/akreditasi/universitas', [LandingController::class, 'universityAccreditation'])->name('accreditations.university');
+Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap');
 
 // Authenticated Routes
 Route::middleware(['auth', 'verified'])->group(function () {

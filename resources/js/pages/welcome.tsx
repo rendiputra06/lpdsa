@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     ArrowUpRight,
@@ -98,19 +98,78 @@ return;
         ? heroSettings.hero_welcome_subtitle
         : 'Media resmi publikasi pengumuman akademik, penjaminan mutu, layanan digital, dan agenda Universitas Abdurrab.';
 
+    const page = usePage();
+    const sharedProps = page.props as Record<string, any>;
+    const settings = sharedProps.settings || {};
+    const baseUrl = sharedProps.appUrl || 'http://localhost:8000';
+
+    const rawLogo = settings.app_logo ? `/storage/${settings.app_logo}` : '/apple-touch-icon.png';
+    const absoluteLogo = rawLogo.startsWith('http') ? rawLogo : `${baseUrl}${rawLogo.startsWith('/') ? '' : '/'}${rawLogo}`;
+    const canonicalUrl = `${baseUrl}/`;
+
+    const homeTitle = 'Pusat Informasi & Pengumuman LPDSA';
+    const homeDesc = settings.app_description || 'Lembaga Pangkalan Data, SPMI, dan Akreditasi Universitas Abdurrab. Menjamin mutu akademik, akurasi data pangkalan data, dan fasilitasi akreditasi universitas.';
+
+    const jsonLd = [
+        {
+            '@context': 'https://schema.org',
+            '@type': 'EducationalOrganization',
+            name: settings.app_name || 'LPDSA Universitas Abdurrab',
+            alternateName: 'Lembaga Pangkalan Data, SPMI, dan Akreditasi',
+            url: baseUrl,
+            logo: absoluteLogo,
+            parentOrganization: {
+                '@type': 'CollegeOrUniversity',
+                name: 'Universitas Abdurrab',
+                url: 'https://univrab.ac.id',
+            },
+            address: {
+                '@type': 'PostalAddress',
+                streetAddress: 'Jl. Riau Ujung No. 73, Tampan',
+                addressLocality: 'Pekanbaru',
+                addressRegion: 'Riau',
+                postalCode: '28291',
+                addressCountry: 'ID',
+            },
+            contactPoint: {
+                '@type': 'ContactPoint',
+                telephone: '(+62) 761 387 62',
+                contactType: 'customer service',
+                email: 'lpdsa@univrab.ac.id',
+            },
+        },
+        {
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name: settings.app_name || 'LPDSA Universitas Abdurrab',
+            url: baseUrl,
+            potentialAction: {
+                '@type': 'SearchAction',
+                target: `${baseUrl}/announcements?search={search_term_string}`,
+                'query-input': 'required name=search_term_string',
+            },
+        },
+    ];
+
     return (
         <>
-            <Head title="Pusat Informasi & Pengumuman LPDSA">
-                <meta
-                    name="description"
-                    content="Lembaga Pangkalan Data, SPMI, dan Akreditasi Universitas Abdurrab. Menjamin mutu akademik, akurasi data pangkalan data, dan fasilitasi akreditasi universitas."
-                />
-                <meta property="og:title" content="Portal LPDSA - Universitas Abdurrab" />
-                <meta
-                    property="og:description"
-                    content="Lembaga Pangkalan Data, SPMI, dan Akreditasi Universitas Abdurrab."
-                />
+            <Head title={homeTitle}>
+                <meta name="description" content={homeDesc} />
+                <link rel="canonical" href={canonicalUrl} />
+                <meta property="og:site_name" content={settings.app_name || 'LPDSA Universitas Abdurrab'} />
+                <meta property="og:title" content={`${homeTitle} - ${settings.app_name || 'LPDSA Universitas Abdurrab'}`} />
+                <meta property="og:description" content={homeDesc} />
                 <meta property="og:type" content="website" />
+                <meta property="og:url" content={canonicalUrl} />
+                <meta property="og:image" content={absoluteLogo} />
+                <meta property="og:locale" content="id_ID" />
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={`${homeTitle} - ${settings.app_name || 'LPDSA Universitas Abdurrab'}`} />
+                <meta name="twitter:description" content={homeDesc} />
+                <meta name="twitter:image" content={absoluteLogo} />
+                <script type="application/ld+json">
+                    {JSON.stringify(jsonLd)}
+                </script>
             </Head>
 
             {/* 1. HERO SECTION (Split layout matching Univrab Homepage reference) */}

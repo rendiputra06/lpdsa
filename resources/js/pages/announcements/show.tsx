@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     Calendar,
     User,
@@ -31,22 +31,112 @@ export default function Show({
     relatedAnnouncements = [],
     categories = [],
 }: ShowProps) {
+    const page = usePage();
+    const sharedProps = page.props as Record<string, any>;
+    const settings = sharedProps.settings || {};
+    const baseUrl = sharedProps.appUrl || 'http://localhost:8000';
+
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
     const categoryName = announcement.category?.name || 'Umum';
     const dateFormatted = formatDate(announcement.published_at);
     const eventDetail = announcement.event_detail;
 
+    const seoTitle = announcement.meta_title || announcement.title;
+    const seoDescription =
+        announcement.meta_description ||
+        announcement.excerpt ||
+        (announcement.content ? announcement.content.replace(/<[^>]*>/g, '').trim().substring(0, 160) : announcement.title);
+
+    const rawImage = announcement.thumbnail
+        ? `/storage/${announcement.thumbnail}`
+        : settings.app_logo
+          ? `/storage/${settings.app_logo}`
+          : '/apple-touch-icon.png';
+    const absoluteOgImage = rawImage.startsWith('http')
+        ? rawImage
+        : `${baseUrl}${rawImage.startsWith('/') ? '' : '/'}${rawImage}`;
+    const canonicalUrl = `${baseUrl}/announcements/${announcement.slug}`;
+
+    const jsonLd = [
+        {
+            '@context': 'https://schema.org',
+            '@type': announcement.type === 'event' ? 'Event' : 'NewsArticle',
+            headline: announcement.title,
+            description: seoDescription,
+            datePublished: announcement.published_at,
+            dateModified: announcement.updated_at || announcement.published_at,
+            author: {
+                '@type': 'Person',
+                name: announcement.author?.name || 'Admin LPDSA',
+            },
+            publisher: {
+                '@type': 'Organization',
+                name: 'LPDSA Universitas Abdurrab',
+                url: 'https://univrab.ac.id',
+            },
+            image: [absoluteOgImage],
+            ...(announcement.type === 'event' && eventDetail
+                ? {
+                      name: announcement.title,
+                      startDate: eventDetail.start_at,
+                      endDate: eventDetail.end_at,
+                      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+                      eventStatus: 'https://schema.org/EventScheduled',
+                      location: {
+                          '@type': 'Place',
+                          name: eventDetail.location || 'Universitas Abdurrab',
+                          address: 'Jl. Riau Ujung No. 73, Tampan, Pekanbaru, Riau 28291',
+                      },
+                  }
+                : {}),
+        },
+        {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+                {
+                    '@type': 'ListItem',
+                    position: 1,
+                    name: 'Beranda',
+                    item: `${baseUrl}/`,
+                },
+                {
+                    '@type': 'ListItem',
+                    position: 2,
+                    name: 'Pengumuman',
+                    item: `${baseUrl}/announcements`,
+                },
+                {
+                    '@type': 'ListItem',
+                    position: 3,
+                    name: announcement.title,
+                },
+            ],
+        },
+    ];
+
     return (
         <>
-            <Head title={announcement.title}>
-                <meta name="description" content={announcement.excerpt || announcement.meta_description || announcement.title} />
-                <meta property="og:title" content={`${announcement.title} - LPDSA Universitas Abdurrab`} />
-                <meta property="og:description" content={announcement.excerpt || announcement.meta_description || announcement.title} />
+            <Head title={seoTitle}>
+                <meta name="description" content={seoDescription} />
+                <link rel="canonical" href={canonicalUrl} />
+                <meta property="og:site_name" content={settings.app_name || 'LPDSA Universitas Abdurrab'} />
+                <meta property="og:title" content={`${seoTitle} - ${settings.app_name || 'LPDSA Universitas Abdurrab'}`} />
+                <meta property="og:description" content={seoDescription} />
                 <meta property="og:type" content="article" />
-                {announcement.thumbnail && (
-                    <meta property="og:image" content={`/storage/${announcement.thumbnail}`} />
+                <meta property="og:url" content={canonicalUrl} />
+                <meta property="og:image" content={absoluteOgImage} />
+                <meta property="og:locale" content="id_ID" />
+                {announcement.published_at && (
+                    <meta property="article:published_time" content={announcement.published_at} />
                 )}
                 <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={`${seoTitle} - ${settings.app_name || 'LPDSA Universitas Abdurrab'}`} />
+                <meta name="twitter:description" content={seoDescription} />
+                <meta name="twitter:image" content={absoluteOgImage} />
+                <script type="application/ld+json">
+                    {JSON.stringify(jsonLd)}
+                </script>
             </Head>
 
             {/* Page Hero with Univrab style (Breadcrumbs, Eyebrow, H1, Meta Bar) */}

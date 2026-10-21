@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Search, FilterX, ArrowUpDown, LayoutGrid, ListFilter } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import AnnouncementCard from '@/components/public/announcement-card';
@@ -78,13 +78,62 @@ export default function Index({ announcements, categories = [], filters = {} }: 
 
     const hasActiveFilters = Boolean(search || category || (sort && sort !== 'latest'));
 
+    const page = usePage();
+    const sharedProps = page.props as Record<string, any>;
+    const settings = sharedProps.settings || {};
+    const baseUrl = sharedProps.appUrl || 'http://localhost:8000';
+
+    const rawLogo = settings.app_logo ? `/storage/${settings.app_logo}` : '/apple-touch-icon.png';
+    const absoluteLogo = rawLogo.startsWith('http') ? rawLogo : `${baseUrl}${rawLogo.startsWith('/') ? '' : '/'}${rawLogo}`;
+    const canonicalUrl = `${baseUrl}/announcements`;
+
+    const activeCategoryObj = categories.find((c: any) => c.slug === category);
+    const pageTitle = activeCategoryObj
+        ? `Pengumuman Kategori ${activeCategoryObj.name}`
+        : 'Arsip Pengumuman & Berita';
+    const pageDescription =
+        'Arsip pengumuman resmi, surat edaran, dan informasi kegiatan LPDSA Universitas Abdurrab. Temukan berita akademik, penjaminan mutu, dan akreditasi.';
+
+    const jsonLd = [
+        {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+                {
+                    '@type': 'ListItem',
+                    position: 1,
+                    name: 'Beranda',
+                    item: `${baseUrl}/`,
+                },
+                {
+                    '@type': 'ListItem',
+                    position: 2,
+                    name: 'Arsip Pengumuman',
+                    item: canonicalUrl,
+                },
+            ],
+        },
+    ];
+
     return (
         <>
-            <Head title="Arsip Pengumuman & Berita">
-                <meta
-                    name="description"
-                    content="Arsip pengumuman, surat edaran, dan informasi kegiatan LPDSA Universitas Abdurrab. Temukan berita akademik, penjaminan mutu, dan akreditasi."
-                />
+            <Head title={pageTitle}>
+                <meta name="description" content={pageDescription} />
+                <link rel="canonical" href={canonicalUrl} />
+                <meta property="og:site_name" content={settings.app_name || 'LPDSA Universitas Abdurrab'} />
+                <meta property="og:title" content={`${pageTitle} - ${settings.app_name || 'LPDSA Universitas Abdurrab'}`} />
+                <meta property="og:description" content={pageDescription} />
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content={canonicalUrl} />
+                <meta property="og:image" content={absoluteLogo} />
+                <meta property="og:locale" content="id_ID" />
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={`${pageTitle} - ${settings.app_name || 'LPDSA Universitas Abdurrab'}`} />
+                <meta name="twitter:description" content={pageDescription} />
+                <meta name="twitter:image" content={absoluteLogo} />
+                <script type="application/ld+json">
+                    {JSON.stringify(jsonLd)}
+                </script>
             </Head>
 
             {/* Page Hero */}

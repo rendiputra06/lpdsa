@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     Award,
     Building2,
@@ -116,14 +116,64 @@ export default function University({ university, history = [], stats }: Universi
         return lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.png') || lower.endsWith('.webp');
     };
 
+    const page = usePage();
+    const sharedProps = page.props as Record<string, any>;
+    const settings = sharedProps.settings || {};
+    const baseUrl = sharedProps.appUrl || 'http://localhost:8000';
+
+    const rawLogo = settings.app_logo ? `/storage/${settings.app_logo}` : '/apple-touch-icon.png';
+    const absoluteLogo = rawLogo.startsWith('http') ? rawLogo : `${baseUrl}${rawLogo.startsWith('/') ? '' : '/'}${rawLogo}`;
+    const canonicalUrl = `${baseUrl}/akreditasi/universitas`;
+
+    const pageTitle = 'Akreditasi Institusi — Universitas Abdurrab';
+    const pageDescription = 'Status resmi akreditasi institusi Universitas Abdurrab dari Badan Akreditasi Nasional Perguruan Tinggi (BAN-PT) serta arsip riwayat sertifikasi.';
+
+    const jsonLd = [
+        {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+                {
+                    '@type': 'ListItem',
+                    position: 1,
+                    name: 'Beranda',
+                    item: `${baseUrl}/`,
+                },
+                {
+                    '@type': 'ListItem',
+                    position: 2,
+                    name: 'Direktori Akreditasi',
+                    item: `${baseUrl}/akreditasi`,
+                },
+                {
+                    '@type': 'ListItem',
+                    position: 3,
+                    name: 'Akreditasi Institusi',
+                    item: canonicalUrl,
+                },
+            ],
+        },
+    ];
+
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-            <Head>
-                <title>Akreditasi Institusi — Universitas Abdurrab</title>
-                <meta
-                    name="description"
-                    content="Status resmi akreditasi institusi Universitas Abdurrab dari Badan Akreditasi Nasional Perguruan Tinggi (BAN-PT) serta arsip riwayat sertifikasi."
-                />
+            <Head title="Akreditasi Institusi — Universitas Abdurrab">
+                <meta name="description" content={pageDescription} />
+                <link rel="canonical" href={canonicalUrl} />
+                <meta property="og:site_name" content={settings.app_name || 'LPDSA Universitas Abdurrab'} />
+                <meta property="og:title" content={`${pageTitle} - ${settings.app_name || 'LPDSA Universitas Abdurrab'}`} />
+                <meta property="og:description" content={pageDescription} />
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content={canonicalUrl} />
+                <meta property="og:image" content={absoluteLogo} />
+                <meta property="og:locale" content="id_ID" />
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={`${pageTitle} - ${settings.app_name || 'LPDSA Universitas Abdurrab'}`} />
+                <meta name="twitter:description" content={pageDescription} />
+                <meta name="twitter:image" content={absoluteLogo} />
+                <script type="application/ld+json">
+                    {JSON.stringify(jsonLd)}
+                </script>
             </Head>
 
             {/* BREADCRUMB & HEADER SEDERHANA */}

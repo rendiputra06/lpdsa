@@ -45,6 +45,7 @@ class HandleInertiaRequests extends Middleware
             'menus' => \App\Models\Menu::tree()->whereNull('parent_id')->orderBy('order')->get(),
             'contactPage' => \App\Models\StaticPage::where('slug', 'contact')->first(),
             'settings' => \App\Models\Setting::all()->pluck('value', 'key'),
+            'appUrl' => config('app.url'),
         ];
     }
 }

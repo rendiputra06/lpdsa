@@ -119,12 +119,12 @@
 - [x] Konten diambil dari tabel `static_pages`
 
 ### 5.7 Halaman 404 Custom
-- [ ] Desain halaman error 404 sesuai tema universitas
-- [ ] Tombol kembali ke halaman utama
+- [x] Desain halaman error 404 sesuai tema universitas
+- [x] Tombol kembali ke halaman utama
 
 ### 5.8 Sitemap / Peta Situs
-- [ ] Generate halaman sitemap statis
-- [ ] Daftarkan semua halaman publik yang tersedia
+- [x] Generate halaman sitemap dinamis (sitemap.xml)
+- [x] Daftarkan semua halaman publik yang tersedia
 
 ---
 
