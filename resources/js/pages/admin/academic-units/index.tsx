@@ -1,23 +1,33 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
     Award,
     Building2,
     CheckCircle2,
     Clock,
+    Edit,
     ExternalLink,
     GraduationCap,
     Info,
     Layers,
+    Power,
     RefreshCw,
     School,
     Search,
     ShieldCheck,
     X,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -86,6 +96,60 @@ export default function Index({
     const [isSyncing, setIsSyncing] = useState(false);
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
 
+    // State untuk Dialog Edit Unit Akademik
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [editingUnit, setEditingUnit] = useState<AcademicUnit | null>(null);
+
+    const {
+        data: editData,
+        setData: setEditData,
+        put: putEdit,
+        processing: isEditing,
+        errors: editErrors,
+        reset: resetEdit,
+        clearErrors: clearEditErrors,
+    } = useForm({
+        name: '',
+        code: '',
+        level: '',
+        parent_id: '' as string | number,
+        type: 'study_program' as AcademicUnitType,
+    });
+
+    const handleOpenEditDialog = (unit: AcademicUnit) => {
+        setEditingUnit(unit);
+        clearEditErrors();
+        setEditData({
+            name: unit.name,
+            code: unit.code || '',
+            level: unit.level || '',
+            parent_id: unit.parent_id || '',
+            type: unit.type,
+        });
+        setIsEditDialogOpen(true);
+    };
+
+    const handleEditSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingUnit) return;
+
+        putEdit(`/admin/academic-units/${editingUnit.id}`, {
+            onSuccess: () => {
+                setIsEditDialogOpen(false);
+                setEditingUnit(null);
+                resetEdit();
+            },
+        });
+    };
+
+    const handleToggleStatus = (unit: AcademicUnit) => {
+        router.patch(
+            `/admin/academic-units/${unit.id}/toggle-status`,
+            {},
+            { preserveScroll: true }
+        );
+    };
+
     const handleFilterChange = (key: string, value: string) => {
         const nextFilters = {
             ...filters,
@@ -112,8 +176,8 @@ export default function Index({
 
     const handleSync = () => {
         const msg = apiInfo.api_url
-            ? `Sinkronisasi akan mencocokkan seluruh data dengan API sistem akademik (${apiInfo.api_url}). Data yang tidak terdaftar di API akan otomatis dihapus dan data baru akan ditambahkan. Lanjutkan?`
-            : 'Sinkronisasi akan mencocokkan data dengan dataset baku Universitas Abdurrab (FFIK, FK, FT, FPSI). Data yang tidak terdaftar akan otomatis dihapus dan data baru akan ditambahkan. Lanjutkan?';
+            ? `Sinkronisasi akan mencocokkan data unit akademik dengan API sistem akademik (${apiInfo.api_url}).\n\nUnit yang tidak lagi terdaftar di API akan dinonaktifkan secara aman, sehingga seluruh riwayat akreditasi tetap terlindungi.\n\nLanjutkan sinkronisasi?`
+            : 'Sinkronisasi akan mencocokkan data dengan dataset baku Universitas Abdurrab (FFIK, FK, FT, FPSI).\n\nUnit yang tidak terdaftar akan dinonaktifkan secara aman, sehingga seluruh riwayat akreditasi tetap terlindungi.\n\nLanjutkan sinkronisasi?';
 
         if (confirm(msg)) {
             setIsSyncing(true);
@@ -126,6 +190,40 @@ export default function Index({
             );
         }
     };
+
+    // Filter reaktif untuk tampilan hierarki berdasarkan pencarian
+    const filteredHierarchyFaculties = useMemo(() => {
+        if (!hierarchy?.children) return [];
+        if (!searchQuery.trim()) return hierarchy.children;
+
+        const q = searchQuery.toLowerCase();
+        return hierarchy.children
+            .map((faculty: any) => {
+                const facMatches =
+                    faculty.name.toLowerCase().includes(q) ||
+                    (faculty.code && faculty.code.toLowerCase().includes(q));
+                const matchingProdi = (faculty.children || []).filter(
+                    (p: any) =>
+                        p.name.toLowerCase().includes(q) ||
+                        (p.code && p.code.toLowerCase().includes(q)) ||
+                        (p.level && p.level.toLowerCase().includes(q))
+                );
+
+                if (facMatches) {
+                    return faculty;
+                }
+
+                if (matchingProdi.length > 0) {
+                    return {
+                        ...faculty,
+                        children: matchingProdi,
+                    };
+                }
+
+                return null;
+            })
+            .filter(Boolean);
+    }, [hierarchy, searchQuery]);
 
     const getTypeBadge = (type: AcademicUnitType) => {
         switch (type) {
@@ -187,39 +285,42 @@ export default function Index({
         <div className="space-y-6">
             <Head title="Master Unit Akademik - LPDSA" />
 
-            {/* Header & Primary Actions */}
+            {/* Header & Primary Actions (Univrab Compact Header Standard) */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
-                        <GraduationCap className="h-7 w-7 text-[#8B142C] dark:text-red-400" />
-                        <span>Data Master Unit Akademik</span>
-                    </h1>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        Data master Universitas, Fakultas, dan Program Studi dikendalikan secara terpusat dari API sistem akademik
-                    </p>
+                <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-brand-50 dark:bg-brand-950/70 text-[#8B142C] dark:text-gold-400 flex items-center justify-center shrink-0 border border-brand-100 dark:border-brand-900/50">
+                        <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                            Data Master Unit Akademik
+                        </h1>
+                        <p className="text-xs sm:text-sm text-slate-500 dark:text-neutral-400 mt-0.5">
+                            Data master Universitas, Fakultas, dan Program Studi tersinkronisasi terpusat untuk penjaminan mutu dan akreditasi.
+                        </p>
+                    </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                    {/* Tombol Sinkronisasi dari API Utama */}
-                    <Button
-                        onClick={handleSync}
-                        disabled={isSyncing}
-                        className="gap-2 bg-[#8B142C] hover:bg-[#721024] text-white shadow-sm"
-                        title="Sinkronisasi dan rekonsiliasi data unit akademik dari API"
-                    >
-                        <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                        <span>{isSyncing ? 'Menyinkronkan...' : 'Sinkronkan dari API'}</span>
-                    </Button>
-
+                <div className="flex flex-wrap items-center gap-2.5">
                     <Button
                         variant="outline"
                         asChild
-                        className="gap-1.5 text-slate-700 dark:text-slate-300 hover:text-[#8B142C] border-slate-300 dark:border-slate-700"
+                        className="rounded-xl border-slate-200 dark:border-neutral-800 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-neutral-800"
                     >
                         <Link href="/admin/accreditations">
-                            <Award className="h-4 w-4 text-[#8B142C] dark:text-red-400" />
+                            <Award className="h-4 w-4 mr-1.5 text-[#8B142C] dark:text-gold-400" />
                             <span>Ke Data Akreditasi</span>
                         </Link>
+                    </Button>
+
+                    <Button
+                        onClick={handleSync}
+                        disabled={isSyncing}
+                        className="rounded-xl bg-[#8B142C] hover:bg-[#721024] text-white font-bold text-xs shadow-xs"
+                        title="Sinkronisasi dan rekonsiliasi data unit akademik dari API"
+                    >
+                        <RefreshCw className={`h-4 w-4 mr-1.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                        <span>{isSyncing ? 'Menyinkronkan...' : 'Sinkronkan dari API'}</span>
                     </Button>
                 </div>
             </div>
@@ -472,11 +573,14 @@ export default function Index({
                                     <TableHead className="w-[160px] text-xs font-bold uppercase tracking-wider">
                                         Akreditasi Terkini
                                     </TableHead>
-                                    <TableHead className="w-[110px] text-center text-xs font-bold uppercase tracking-wider">
+                                    <TableHead className="w-[100px] text-center text-xs font-bold uppercase tracking-wider">
                                         Status
                                     </TableHead>
-                                    <TableHead className="w-[160px] text-right text-xs font-bold uppercase tracking-wider">
+                                    <TableHead className="w-[140px] text-right text-xs font-bold uppercase tracking-wider">
                                         Terakhir Sinkron
+                                    </TableHead>
+                                    <TableHead className="w-[90px] text-right text-xs font-bold uppercase tracking-wider">
+                                        Aksi
                                     </TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -532,11 +636,33 @@ export default function Index({
                                             <TableCell className="text-right text-xs text-slate-500 dark:text-neutral-400 font-mono">
                                                 {item.synced_at ? formatDate(item.synced_at) : '-'}
                                             </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleToggleStatus(item)}
+                                                        className="h-8 w-8 p-0 text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                                                        title={item.is_active ? 'Nonaktifkan Unit' : 'Aktifkan Unit'}
+                                                    >
+                                                        <Power className={`h-3.5 w-3.5 ${item.is_active ? 'text-emerald-600' : 'text-slate-400'}`} />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleOpenEditDialog(item)}
+                                                        className="h-8 w-8 p-0 text-slate-500 hover:text-[#8B142C] dark:hover:text-gold-400"
+                                                        title="Edit Data Unit"
+                                                    >
+                                                        <Edit className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
                                         </TableRow>
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={8} className="text-center py-12 text-slate-500">
+                                        <TableCell colSpan={9} className="text-center py-12 text-slate-500">
                                             Tidak ada data unit akademik yang sesuai dengan filter.
                                         </TableCell>
                                     </TableRow>
@@ -625,78 +751,183 @@ export default function Index({
                     </div>
 
                     {/* Faculties Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {hierarchy.children?.map((faculty: any) => (
-                            <div
-                                key={faculty.id}
-                                className="rounded-2xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 shadow-xs flex flex-col justify-between"
-                            >
-                                <div>
-                                    {/* Faculty Header */}
-                                    <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100 dark:border-neutral-800">
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 flex items-center justify-center shrink-0">
-                                                <School className="h-5 w-5" />
-                                            </div>
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-mono text-xs px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold">
-                                                        {faculty.code}
-                                                    </span>
-                                                    <span className="text-[11px] font-semibold text-slate-500 dark:text-neutral-400">
-                                                        Fakultas
-                                                    </span>
+                    {filteredHierarchyFaculties.length === 0 ? (
+                        <div className="p-12 text-center rounded-2xl border border-dashed border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-slate-500 text-xs">
+                            Tidak ada unit atau program studi dalam struktur hierarki yang cocok dengan kata kunci &quot;{searchQuery}&quot;.
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {filteredHierarchyFaculties.map((faculty: any) => (
+                                <div
+                                    key={faculty.id}
+                                    className="rounded-2xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 shadow-xs flex flex-col justify-between"
+                                >
+                                    <div>
+                                        {/* Faculty Header */}
+                                        <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100 dark:border-neutral-800">
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 flex items-center justify-center shrink-0">
+                                                    <School className="h-5 w-5" />
                                                 </div>
-                                                <h4 className="font-bold text-sm text-slate-900 dark:text-white mt-0.5">
-                                                    {faculty.name}
-                                                </h4>
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-mono text-xs px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold">
+                                                            {faculty.code}
+                                                        </span>
+                                                        <span className="text-[11px] font-semibold text-slate-500 dark:text-neutral-400">
+                                                            Fakultas
+                                                        </span>
+                                                    </div>
+                                                    <h4 className="font-bold text-sm text-slate-900 dark:text-white mt-0.5">
+                                                        {faculty.name}
+                                                    </h4>
+                                                </div>
                                             </div>
+
+                                            <span className="text-xs font-bold text-slate-500 dark:text-neutral-400 shrink-0">
+                                                {faculty.children?.length || 0} Prodi
+                                            </span>
                                         </div>
 
-                                        <span className="text-xs font-bold text-slate-500 dark:text-neutral-400 shrink-0">
-                                            {faculty.children?.length || 0} Prodi
-                                        </span>
-                                    </div>
+                                        {/* Study Programs Under Faculty */}
+                                        <div className="mt-3 space-y-2">
+                                            {faculty.children?.map((program: any) => (
+                                                <div
+                                                    key={program.id}
+                                                    className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/70 dark:bg-neutral-800/50 border border-slate-100 dark:border-neutral-800 text-xs hover:border-slate-300 dark:hover:border-neutral-700 transition-colors"
+                                                >
+                                                    <div className="flex items-center gap-2.5 min-w-0">
+                                                        {getLevelBadge(program.level)}
+                                                        <span className="font-medium text-slate-800 dark:text-neutral-200 truncate">
+                                                            {program.name}
+                                                        </span>
+                                                        {program.code && (
+                                                            <span className="font-mono text-[10px] text-slate-400 dark:text-neutral-500">
+                                                                ({program.code})
+                                                            </span>
+                                                        )}
+                                                    </div>
 
-                                    {/* Study Programs Under Faculty */}
-                                    <div className="mt-3 space-y-2">
-                                        {faculty.children?.map((program: any) => (
-                                            <div
-                                                key={program.id}
-                                                className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/70 dark:bg-neutral-800/50 border border-slate-100 dark:border-neutral-800 text-xs hover:border-slate-300 dark:hover:border-neutral-700 transition-colors"
-                                            >
-                                                <div className="flex items-center gap-2.5 min-w-0">
-                                                    {getLevelBadge(program.level)}
-                                                    <span className="font-medium text-slate-800 dark:text-neutral-200 truncate">
-                                                        {program.name}
-                                                    </span>
-                                                    {program.code && (
-                                                        <span className="font-mono text-[10px] text-slate-400 dark:text-neutral-500">
-                                                            ({program.code})
-                                                        </span>
-                                                    )}
+                                                    <div className="flex items-center gap-2 shrink-0">
+                                                        {program.latest_accreditation ? (
+                                                            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                                                {program.latest_accreditation.grade}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-[11px] text-slate-400 dark:text-neutral-500">
+                                                                -
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
-
-                                                <div className="flex items-center gap-2 shrink-0">
-                                                    {program.latest_accreditation ? (
-                                                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                                                            {program.latest_accreditation.grade}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-[11px] text-slate-400 dark:text-neutral-500">
-                                                            -
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
+
+            {/* Dialog Edit Unit Akademik */}
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                <DialogContent className="sm:max-w-[480px] rounded-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">
+                            Edit Unit Akademik
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <form onSubmit={handleEditSubmit} className="space-y-4 pt-2">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="unit_name" className="text-xs font-semibold">Nama Unit</Label>
+                            <Input
+                                id="unit_name"
+                                value={editData.name}
+                                onChange={(e) => setEditData('name', e.target.value)}
+                                className="h-9 text-xs"
+                                placeholder="Contoh: Teknik Informatika"
+                                required
+                            />
+                            {editErrors.name && <p className="text-red-500 text-xs">{editErrors.name}</p>}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label htmlFor="unit_code" className="text-xs font-semibold">Kode Unit</Label>
+                                <Input
+                                    id="unit_code"
+                                    value={editData.code}
+                                    onChange={(e) => setEditData('code', e.target.value)}
+                                    className="h-9 text-xs"
+                                    placeholder="Contoh: 55201 / FT"
+                                />
+                                {editErrors.code && <p className="text-red-500 text-xs">{editErrors.code}</p>}
+                            </div>
+
+                            {editData.type === 'study_program' && (
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs font-semibold">Jenjang</Label>
+                                    <Select
+                                        value={editData.level}
+                                        onValueChange={(val) => setEditData('level', val)}
+                                    >
+                                        <SelectTrigger className="h-9 text-xs">
+                                            <SelectValue placeholder="Pilih jenjang" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {LEVEL_OPTIONS.map((lvl) => (
+                                                <SelectItem key={lvl} value={lvl}>{lvl}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
+                        </div>
+
+                        {editData.type === 'study_program' && (
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold">Fakultas Induk</Label>
+                                <Select
+                                    value={editData.parent_id ? editData.parent_id.toString() : 'none'}
+                                    onValueChange={(val) => setEditData('parent_id', val === 'none' ? '' : val)}
+                                >
+                                    <SelectTrigger className="h-9 text-xs">
+                                        <SelectValue placeholder="Pilih fakultas" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">Tanpa Fakultas</SelectItem>
+                                        {faculties.map((fac) => (
+                                            <SelectItem key={fac.id} value={fac.id.toString()}>
+                                                {fac.code ? `${fac.code} - ${fac.name}` : fac.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+
+                        <DialogFooter className="pt-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsEditDialogOpen(false)}
+                                className="h-9 text-xs"
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={isEditing}
+                                className="h-9 text-xs bg-[#8B142C] hover:bg-[#721024] text-white font-bold"
+                            >
+                                {isEditing ? 'Menyimpan...' : 'Simpan Perubahan'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

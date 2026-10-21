@@ -79,13 +79,16 @@ class AcademicApiService
         $isLiveApi = false;
         $syncResult = [
             'synced_count' => 0,
+            'deactivated_count' => 0,
             'deleted_count' => 0,
         ];
 
         if (!empty($apiUrl)) {
-            $endpoint = rtrim($apiUrl, '/');
-            if (!str_contains($endpoint, '/study-programs') && !str_contains($endpoint, '/academic-units')) {
-                $endpoint .= '/study-programs';
+            $endpoint = trim($apiUrl);
+            // Normalisasi endpoint hanya jika URL adalah root domain tanpa path
+            $parsed = parse_url($endpoint);
+            if (empty($parsed['path']) || $parsed['path'] === '/') {
+                $endpoint = rtrim($endpoint, '/') . '/api/v1/academic-units';
             }
 
             try {
@@ -101,31 +104,61 @@ class AcademicApiService
                     if (is_array($data) && count($data) > 0) {
                         $isLiveApi = true;
                         $syncResult = $this->importFromApiResponse($data);
+                    } else {
+                        return [
+                            'success' => false,
+                            'is_live_api' => true,
+                            'synced_count' => 0,
+                            'deactivated_count' => 0,
+                            'deleted_count' => 0,
+                            'message' => 'API eksternal berhasil dihubungi, namun format payload data kosong atau tidak valid.',
+                        ];
                     }
+                } else {
+                    $status = $response->status();
+                    return [
+                        'success' => false,
+                        'is_live_api' => false,
+                        'synced_count' => 0,
+                        'deactivated_count' => 0,
+                        'deleted_count' => 0,
+                        'message' => "Gagal menghubungi API eksternal (HTTP {$status}). Sinkronisasi dibatalkan untuk melindungi integritas data.",
+                    ];
                 }
             } catch (\Exception $e) {
-                Log::warning('Academic API connection failed, falling back to local dataset: ' . $e->getMessage());
+                Log::error('Academic API connection failed: ' . $e->getMessage());
+                return [
+                    'success' => false,
+                    'is_live_api' => false,
+                    'synced_count' => 0,
+                    'deactivated_count' => 0,
+                    'deleted_count' => 0,
+                    'message' => 'Koneksi ke API sistem akademik gagal: ' . $e->getMessage() . '. Sinkronisasi dibatalkan.',
+                ];
             }
-        }
-
-        // If live API was not used or returned no items, use default Univrab structure
-        if (!$isLiveApi) {
+        } else {
+            // Jika URL API belum dikonfigurasi, gunakan dataset standar Univrab
             $syncResult = $this->importFromDefaultDataset();
         }
 
         $syncedCount = $syncResult['synced_count'];
+        $deactivatedCount = $syncResult['deactivated_count'];
         $deletedCount = $syncResult['deleted_count'];
 
         $sourceLabel = $isLiveApi ? 'API eksternal' : 'dataset standar Univrab';
         $message = "Sinkronisasi berhasil ({$sourceLabel}): {$syncedCount} unit akademik aktif diperbarui.";
+        if ($deactivatedCount > 0) {
+            $message .= " {$deactivatedCount} unit dinonaktifkan demi menjaga seluruh arsip akreditasi.";
+        }
         if ($deletedCount > 0) {
-            $message .= " {$deletedCount} unit akademik yang tidak terdaftar di sumber telah dihapus.";
+            $message .= " {$deletedCount} unit usang tanpa riwayat akreditasi telah dibersihkan.";
         }
 
         return [
             'success' => true,
             'is_live_api' => $isLiveApi,
             'synced_count' => $syncedCount,
+            'deactivated_count' => $deactivatedCount,
             'deleted_count' => $deletedCount,
             'message' => $message,
         ];
@@ -173,15 +206,33 @@ class AcademicApiService
                 $facName = $item['name'] ?? ($item['nama_fakultas'] ?? 'Fakultas');
 
                 if ($facCode || $facName) {
-                    $faculty = AcademicUnit::updateOrCreate(
-                        ['type' => 'faculty', 'code' => $facCode],
-                        [
+                    $faculty = null;
+                    if (!empty($facCode)) {
+                        $faculty = AcademicUnit::where('type', 'faculty')->where('code', $facCode)->first();
+                    }
+                    if (!$faculty && !empty($facName)) {
+                        $faculty = AcademicUnit::where('type', 'faculty')->where('name', $facName)->first();
+                    }
+
+                    if ($faculty) {
+                        $faculty->update([
+                            'name' => $facName,
+                            'code' => $facCode ?: $faculty->code,
+                            'parent_id' => $univ->id,
+                            'is_active' => $item['is_active'] ?? true,
+                            'synced_at' => $now,
+                        ]);
+                    } else {
+                        $faculty = AcademicUnit::create([
+                            'type' => 'faculty',
+                            'code' => $facCode,
                             'name' => $facName,
                             'parent_id' => $univ->id,
                             'is_active' => $item['is_active'] ?? true,
                             'synced_at' => $now,
-                        ]
-                    );
+                        ]);
+                    }
+
                     $key = $facCode ?: $facName;
                     $faculties[$key] = $faculty;
                     $processedIds[] = $faculty->id;
@@ -198,15 +249,32 @@ class AcademicApiService
             if ($facCode || $facName) {
                 $key = $facCode ?: $facName;
                 if (!isset($faculties[$key])) {
-                    $faculty = AcademicUnit::updateOrCreate(
-                        ['type' => 'faculty', 'code' => $facCode],
-                        [
+                    $faculty = null;
+                    if (!empty($facCode)) {
+                        $faculty = AcademicUnit::where('type', 'faculty')->where('code', $facCode)->first();
+                    }
+                    if (!$faculty && !empty($facName)) {
+                        $faculty = AcademicUnit::where('type', 'faculty')->where('name', $facName)->first();
+                    }
+
+                    if ($faculty) {
+                        $faculty->update([
+                            'name' => $facName ?: $faculty->name,
+                            'code' => $facCode ?: $faculty->code,
+                            'parent_id' => $univ->id,
+                            'is_active' => true,
+                            'synced_at' => $now,
+                        ]);
+                    } else {
+                        $faculty = AcademicUnit::create([
+                            'type' => 'faculty',
+                            'code' => $facCode,
                             'name' => $facName ?: ('Fakultas ' . $facCode),
                             'parent_id' => $univ->id,
                             'is_active' => true,
                             'synced_at' => $now,
-                        ]
-                    );
+                        ]);
+                    }
                     $faculties[$key] = $faculty;
                 }
                 $facultyId = $faculties[$key]->id;
@@ -219,27 +287,50 @@ class AcademicApiService
             $isActive = $item['is_active'] ?? true;
 
             if ($prodiName) {
-                $prodi = AcademicUnit::updateOrCreate(
-                    ['type' => 'study_program', 'code' => $prodiCode],
-                    [
+                $prodi = null;
+                if (!empty($prodiCode)) {
+                    $prodi = AcademicUnit::where('type', 'study_program')->where('code', $prodiCode)->first();
+                }
+                if (!$prodi && !empty($prodiName)) {
+                    $prodi = AcademicUnit::where('type', 'study_program')
+                        ->where('name', $prodiName)
+                        ->when($facultyId, fn ($q) => $q->where('parent_id', $facultyId))
+                        ->first();
+                }
+
+                if ($prodi) {
+                    $prodi->update([
+                        'code' => $prodiCode ?: $prodi->code,
+                        'name' => $prodiName,
+                        'level' => strtoupper(trim($level)),
+                        'faculty_name' => $facName ?: $prodi->faculty_name,
+                        'parent_id' => $facultyId ?: $prodi->parent_id,
+                        'is_active' => (bool) $isActive,
+                        'synced_at' => $now,
+                    ]);
+                } else {
+                    $prodi = AcademicUnit::create([
+                        'type' => 'study_program',
+                        'code' => $prodiCode,
                         'name' => $prodiName,
                         'level' => strtoupper(trim($level)),
                         'faculty_name' => $facName,
                         'parent_id' => $facultyId,
                         'is_active' => (bool) $isActive,
                         'synced_at' => $now,
-                    ]
-                );
+                    ]);
+                }
                 $processedIds[] = $prodi->id;
             }
         }
 
         $processedIds = array_values(array_unique($processedIds));
-        $deletedCount = $this->pruneObsoleteUnits($processedIds);
+        $pruneResult = $this->pruneObsoleteUnits($processedIds);
 
         return [
             'synced_count' => count($processedIds),
-            'deleted_count' => $deletedCount,
+            'deactivated_count' => $pruneResult['deactivated'],
+            'deleted_count' => $pruneResult['deleted'],
         ];
     }
 
@@ -294,41 +385,65 @@ class AcademicApiService
         }
 
         $processedIds = array_values(array_unique($processedIds));
-        $deletedCount = $this->pruneObsoleteUnits($processedIds);
+        $pruneResult = $this->pruneObsoleteUnits($processedIds);
 
         return [
             'synced_count' => count($processedIds),
-            'deleted_count' => $deletedCount,
+            'deactivated_count' => $pruneResult['deactivated'],
+            'deleted_count' => $pruneResult['deleted'],
         ];
     }
 
     /**
-     * Delete any academic units that are not present in the synced payload.
-     * Deletes study programs first, then faculties, then university,
-     * maintaining foreign key integrity.
+     * Safely reconcile units that are not in the synced payload:
+     * - Units having active/past accreditation records are SOFT-DEACTIVATED (is_active = false)
+     *   so that certificate files and history remain intact.
+     * - Only units with NO accreditation records are permanently deleted.
      */
-    protected function pruneObsoleteUnits(array $syncedIds): int
+    protected function pruneObsoleteUnits(array $syncedIds): array
     {
-        $toDeleteCount = AcademicUnit::whereNotIn('id', $syncedIds)->count();
+        $obsoleteQuery = AcademicUnit::whereNotIn('id', $syncedIds);
 
-        if ($toDeleteCount === 0) {
-            return 0;
+        $totalObsolete = (clone $obsoleteQuery)->count();
+        if ($totalObsolete === 0) {
+            return [
+                'deactivated' => 0,
+                'deleted' => 0,
+            ];
         }
 
-        // 1. Delete study programs not in synced IDs
-        AcademicUnit::whereNotIn('id', $syncedIds)
+        // 1. Deaktivasi unit yang punya riwayat akreditasi
+        $unitsWithAccreditation = (clone $obsoleteQuery)->whereHas('accreditations')->get();
+        $deactivatedCount = 0;
+        foreach ($unitsWithAccreditation as $unit) {
+            if ($unit->is_active) {
+                $unit->update(['is_active' => false]);
+                $deactivatedCount++;
+            }
+        }
+
+        // 2. Hapus permanen hanya unit tanpa riwayat akreditasi
+        $deletedStudyPrograms = (clone $obsoleteQuery)
+            ->whereDoesntHave('accreditations')
             ->where('type', 'study_program')
             ->delete();
 
-        // 2. Delete faculties not in synced IDs
-        AcademicUnit::whereNotIn('id', $syncedIds)
+        $deletedFaculties = (clone $obsoleteQuery)
+            ->whereDoesntHave('accreditations')
             ->where('type', 'faculty')
+            ->whereDoesntHave('children')
             ->delete();
 
-        // 3. Delete any remaining unlisted units
-        AcademicUnit::whereNotIn('id', $syncedIds)
+        $deletedRemaining = (clone $obsoleteQuery)
+            ->whereDoesntHave('accreditations')
+            ->whereDoesntHave('children')
             ->delete();
 
-        return $toDeleteCount;
+        $deletedCount = $deletedStudyPrograms + $deletedFaculties + $deletedRemaining;
+
+        return [
+            'deactivated' => $deactivatedCount,
+            'deleted' => $deletedCount,
+        ];
     }
 }

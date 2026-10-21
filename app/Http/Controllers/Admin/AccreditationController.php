@@ -7,7 +7,6 @@ use App\Http\Requests\Admin\StoreAccreditationRequest;
 use App\Http\Requests\Admin\UpdateAccreditationRequest;
 use App\Models\AcademicUnit;
 use App\Models\Accreditation;
-use App\Services\AcademicApiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -16,7 +15,7 @@ class AccreditationController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Accreditation::query()->with('academicUnit');
+        $query = Accreditation::query()->with(['academicUnit.accreditations']);
 
         if ($request->filled('unit_type') && $request->unit_type !== 'all') {
             $query->where('unit_type', $request->unit_type);
@@ -27,7 +26,41 @@ class AccreditationController extends Controller
         }
 
         if ($request->filled('status') && $request->status !== 'all') {
-            $query->where('status', $request->status);
+            $now = now()->startOfDay();
+            $sixMonths = now()->addMonths(6)->endOfDay();
+
+            switch ($request->status) {
+                case 'active':
+                    $query->where('status', 'active')
+                        ->where(function ($q) use ($now) {
+                            $q->whereNull('valid_until')->orWhere('valid_until', '>=', $now);
+                        });
+                    break;
+
+                case 'expiring_soon':
+                    $query->where('status', 'active')
+                        ->whereNotNull('valid_until')
+                        ->where('valid_until', '>', $now)
+                        ->where('valid_until', '<=', $sixMonths);
+                    break;
+
+                case 'expired':
+                    $query->where(function ($q) use ($now) {
+                        $q->where('status', 'expired')
+                            ->orWhere(function ($sub) use ($now) {
+                                $sub->whereNotNull('valid_until')->where('valid_until', '<', $now);
+                            });
+                    });
+                    break;
+
+                case 'in_process':
+                    $query->where('status', 'in_process');
+                    break;
+
+                default:
+                    $query->where('status', $request->status);
+                    break;
+            }
         }
 
         if ($request->filled('body') && $request->body !== 'all') {
@@ -65,20 +98,27 @@ class AccreditationController extends Controller
         $accreditations = $query->paginate(12)->withQueryString();
 
         // Calculate summary statistics
+        $now = now()->startOfDay();
+        $sixMonths = now()->addMonths(6)->endOfDay();
+
         $stats = [
             'total' => Accreditation::count(),
             'university_count' => Accreditation::university()->count(),
             'faculty_count' => Accreditation::faculty()->count(),
             'study_program_count' => Accreditation::studyProgram()->count(),
-            'active_count' => Accreditation::where('status', 'active')->count(),
+            'active_count' => Accreditation::where('status', 'active')
+                ->where(function ($q) use ($now) {
+                    $q->whereNull('valid_until')->orWhere('valid_until', '>=', $now);
+                })
+                ->count(),
             'expiring_soon_count' => Accreditation::where('status', 'active')
                 ->whereNotNull('valid_until')
-                ->where('valid_until', '>', now())
-                ->where('valid_until', '<=', now()->addMonths(6))
+                ->where('valid_until', '>', $now)
+                ->where('valid_until', '<=', $sixMonths)
                 ->count(),
             'expired_count' => Accreditation::where('status', 'expired')
-                ->orWhere(function ($q) {
-                    $q->whereNotNull('valid_until')->where('valid_until', '<', now());
+                ->orWhere(function ($q) use ($now) {
+                    $q->whereNotNull('valid_until')->where('valid_until', '<', $now);
                 })
                 ->count(),
         ];
@@ -104,6 +144,61 @@ class AccreditationController extends Controller
         ]);
     }
 
+    public function create(Request $request)
+    {
+        $academicUnits = AcademicUnit::active()
+            ->with(['accreditations' => function ($q) {
+                $q->orderBy('valid_until', 'desc');
+            }])
+            ->orderBy('type')
+            ->orderBy('name')
+            ->get();
+
+        $selectedUnit = null;
+        $history = [];
+        if ($request->filled('academic_unit_id')) {
+            $selectedUnit = AcademicUnit::with(['accreditations' => function ($q) {
+                $q->orderBy('valid_until', 'desc');
+            }])->find($request->academic_unit_id);
+
+            if ($selectedUnit) {
+                $history = $selectedUnit->accreditations;
+            }
+        }
+
+        return Inertia::render('admin/accreditations/create', [
+            'academicUnits' => $academicUnits,
+            'selectedUnit' => $selectedUnit,
+            'history' => $history,
+        ]);
+    }
+
+    public function edit(Accreditation $accreditation)
+    {
+        $accreditation->load('academicUnit');
+
+        $academicUnits = AcademicUnit::active()
+            ->orderBy('type')
+            ->orderBy('name')
+            ->get();
+
+        // Load timeline history for this unit
+        $historyQuery = Accreditation::query();
+        if ($accreditation->academic_unit_id) {
+            $historyQuery->where('academic_unit_id', $accreditation->academic_unit_id);
+        } else {
+            $historyQuery->where('unit_name', $accreditation->unit_name)
+                ->where('unit_type', $accreditation->unit_type);
+        }
+        $history = $historyQuery->orderBy('valid_until', 'desc')->get();
+
+        return Inertia::render('admin/accreditations/edit', [
+            'accreditation' => $accreditation,
+            'academicUnits' => $academicUnits,
+            'history' => $history,
+        ]);
+    }
+
     public function store(StoreAccreditationRequest $request)
     {
         $data = $request->validated();
@@ -114,7 +209,7 @@ class AccreditationController extends Controller
 
         Accreditation::create($data);
 
-        return redirect()->back()->with('success', 'Data akreditasi berhasil ditambahkan.');
+        return redirect()->route('admin.accreditations.index')->with('success', 'Data akreditasi berhasil ditambahkan.');
     }
 
     public function update(UpdateAccreditationRequest $request, Accreditation $accreditation)
@@ -141,7 +236,7 @@ class AccreditationController extends Controller
 
         $accreditation->update($data);
 
-        return redirect()->back()->with('success', 'Data akreditasi berhasil diperbarui.');
+        return redirect()->route('admin.accreditations.index')->with('success', 'Data akreditasi berhasil diperbarui.');
     }
 
     public function destroy(Accreditation $accreditation)
@@ -149,12 +244,5 @@ class AccreditationController extends Controller
         $accreditation->delete();
 
         return redirect()->back()->with('success', 'Data akreditasi berhasil dihapus.');
-    }
-
-    public function syncFromApi(AcademicApiService $service)
-    {
-        $result = $service->syncUnits();
-
-        return redirect()->back()->with('success', $result['message']);
     }
 }

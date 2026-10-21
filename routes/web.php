@@ -9,6 +9,7 @@ Route::get('/', [LandingController::class, 'index'])->name('home');
 Route::get('/announcements', [LandingController::class, 'announcements'])->name('announcements.index');
 Route::get('/announcements/{slug}', [LandingController::class, 'showAnnouncement'])->name('announcements.show');
 Route::get('/akreditasi', [LandingController::class, 'accreditations'])->name('accreditations.index');
+Route::get('/akreditasi/universitas', [LandingController::class, 'universityAccreditation'])->name('accreditations.university');
 
 // Authenticated Routes
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -27,7 +28,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('academic-units/{academicUnit}/toggle-status', [\App\Http\Controllers\Admin\AcademicUnitController::class, 'toggleStatus'])->name('academic-units.toggle-status');
         Route::resource('academic-units', \App\Http\Controllers\Admin\AcademicUnitController::class)->except(['create', 'edit', 'show']);
         Route::post('accreditations/sync', [\App\Http\Controllers\Admin\AcademicUnitController::class, 'syncFromApi'])->name('accreditations.sync');
-        Route::resource('accreditations', \App\Http\Controllers\Admin\AccreditationController::class)->except(['create', 'edit', 'show']);
+        Route::resource('accreditations', \App\Http\Controllers\Admin\AccreditationController::class)->except(['show']);
         Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
         Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
         Route::get('activity-logs', [\App\Http\Controllers\Admin\ActivityLogController::class, 'index'])->name('activity-logs.index');

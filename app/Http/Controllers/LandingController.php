@@ -97,8 +97,42 @@ class LandingController extends Controller
         }
 
         $status = $request->get('status', 'active');
+        $now = now()->startOfDay();
+        $sixMonths = now()->addMonths(6)->endOfDay();
+
         if ($status !== 'all') {
-            $query->where('status', $status);
+            switch ($status) {
+                case 'active':
+                    $query->where('status', 'active')
+                        ->where(function ($q) use ($now) {
+                            $q->whereNull('valid_until')->orWhere('valid_until', '>=', $now);
+                        });
+                    break;
+
+                case 'expiring_soon':
+                    $query->where('status', 'active')
+                        ->whereNotNull('valid_until')
+                        ->where('valid_until', '>', $now)
+                        ->where('valid_until', '<=', $sixMonths);
+                    break;
+
+                case 'expired':
+                    $query->where(function ($q) use ($now) {
+                        $q->where('status', 'expired')
+                            ->orWhere(function ($sub) use ($now) {
+                                $sub->whereNotNull('valid_until')->where('valid_until', '<', $now);
+                            });
+                    });
+                    break;
+
+                case 'in_process':
+                    $query->where('status', 'in_process');
+                    break;
+
+                default:
+                    $query->where('status', $status);
+                    break;
+            }
         }
 
         $sort = $request->get('sort', 'unit_type');
@@ -113,11 +147,17 @@ class LandingController extends Controller
                 ->orderBy('unit_name', 'asc');
         }
 
-        $accreditations = $query->paginate(15)->withQueryString();
+        $accreditations = $query->with(['academicUnit.accreditations' => function ($q) {
+            $q->orderBy('valid_until', 'desc');
+        }])->paginate(15)->withQueryString();
 
         $stats = [
             'total' => \App\Models\Accreditation::count(),
-            'active' => \App\Models\Accreditation::where('status', 'active')->count(),
+            'active' => \App\Models\Accreditation::where('status', 'active')
+                ->where(function ($q) use ($now) {
+                    $q->whereNull('valid_until')->orWhere('valid_until', '>=', $now);
+                })
+                ->count(),
             'university' => \App\Models\Accreditation::where('unit_type', 'university')->where('status', 'active')->first(),
             'faculties_count' => \App\Models\Accreditation::where('unit_type', 'faculty')->where('status', 'active')->count(),
             'study_programs_count' => \App\Models\Accreditation::where('unit_type', 'study_program')->where('status', 'active')->count(),
@@ -133,6 +173,55 @@ class LandingController extends Controller
                 'status' => $status,
                 'sort' => $sort,
             ],
+        ]);
+    }
+
+    public function universityAccreditation()
+    {
+        $now = now()->startOfDay();
+
+        // 1. Active or latest university accreditation
+        $university = \App\Models\Accreditation::where('unit_type', 'university')
+            ->where('status', 'active')
+            ->latest('valid_until')
+            ->first() ?? \App\Models\Accreditation::where('unit_type', 'university')->latest()->first();
+
+        // 2. Full chronological history of university accreditations
+        $history = \App\Models\Accreditation::where('unit_type', 'university')
+            ->orderBy('valid_until', 'desc')
+            ->get();
+
+        // 3. Ecosystem stats (study programs & faculties)
+        $studyPrograms = \App\Models\Accreditation::where('unit_type', 'study_program')->where('status', 'active')->get();
+        $facultiesCount = \App\Models\Accreditation::where('unit_type', 'faculty')->where('status', 'active')->count();
+
+        $unggulCount = $studyPrograms->filter(function ($item) {
+            $g = strtolower($item->grade);
+            return str_contains($g, 'unggul') || $g === 'a';
+        })->count();
+
+        $baikSekaliCount = $studyPrograms->filter(function ($item) {
+            $g = strtolower($item->grade);
+            return str_contains($g, 'baik sekali') || $g === 'b';
+        })->count();
+
+        $baikCount = $studyPrograms->filter(function ($item) {
+            $g = strtolower($item->grade);
+            return $g === 'baik' || $g === 'c';
+        })->count();
+
+        $stats = [
+            'faculties_count' => $facultiesCount > 0 ? $facultiesCount : 4,
+            'study_programs_count' => $studyPrograms->count() > 0 ? $studyPrograms->count() : 15,
+            'unggul_count' => $unggulCount,
+            'baik_sekali_count' => $baikSekaliCount,
+            'baik_count' => $baikCount,
+        ];
+
+        return Inertia::render('accreditations/university', [
+            'university' => $university,
+            'history' => $history,
+            'stats' => $stats,
         ]);
     }
 

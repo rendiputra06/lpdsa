@@ -282,58 +282,44 @@ export default function MenuIndex({
             <Head title="Manajemen Menu Navigasi - LPDSA Universitas Abdurrab" />
 
             <div className="space-y-6 pb-12">
-                {/* 1. Univrab Signature Crimson Hero Banner */}
-                <div className="relative rounded-3xl bg-linear-to-br from-brand-900 via-brand-800 to-brand-950 text-white p-6 sm:p-8 lg:p-10 shadow-2xl border border-white/10 overflow-hidden">
-                    {/* Pola titik dekoratif Univrab */}
-                    <div className="absolute inset-0 pattern-dots opacity-20 pointer-events-none" />
-
-                    {/* Gradient light orb */}
-                    <div className="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-gold-400/10 blur-3xl pointer-events-none" />
-
-                    <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                        <div className="max-w-3xl">
-                            {/* Glassmorphism Eyebrow Pill */}
-                            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-pill text-xs font-bold uppercase tracking-wider text-gold-300 border border-white/20 mb-3">
-                                <span className="h-2 w-2 rounded-full bg-gold-400 animate-pulse" />
-                                <span>Struktur & Navigasi Publik LPDSA Univrab</span>
-                            </div>
-
-                            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-tight">
-                                Menu & <span className="text-gold-300">Navigasi Publik</span>
+                {/* Header Halaman Menu Navigasi */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-brand-50 dark:bg-brand-950/70 text-[#8B142C] dark:text-gold-400 flex items-center justify-center shrink-0 border border-brand-100 dark:border-brand-900/50">
+                            <MenuIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+                        </div>
+                        <div>
+                            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                                Menu & Navigasi Publik
                             </h1>
-                            <p className="mt-2 text-sm text-white/80 leading-relaxed max-w-2xl">
-                                Kelola struktur navigasi website utama, menu bertingkat (*dropdown*),
-                                kolom *mega-menu*, dan tautan eksternal portal Universitas Abdurrab.
+                            <p className="text-xs sm:text-sm text-slate-500 dark:text-neutral-400 mt-0.5">
+                                Kelola struktur navbar publik, menu bertingkat (dropdown), dan tautan portal Universitas Abdurrab.
                             </p>
-
-                            {/* Quick Navigation Pills */}
-                            <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
-                                <a
-                                    href="/"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/90 border border-white/10 transition-colors"
-                                >
-                                    <ExternalLink className="h-3.5 w-3.5 text-gold-300" />
-                                    <span>Buka Navbar Publik</span>
-                                </a>
-                                <span className="text-white/40">•</span>
-                                <span className="text-white/70">
-                                    {stats?.total ?? menus.length} Total Item Menu Terpasang
-                                </span>
-                            </div>
                         </div>
+                    </div>
 
-                        {/* CTA Actions */}
-                        <div className="flex flex-wrap items-center gap-3">
-                            <Button
-                                onClick={() => handleOpenCreateDialog(null)}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gold-400 hover:bg-gold-300 text-neutral-950 font-bold text-xs uppercase tracking-wider shadow-lg hover:scale-102 transition-all cursor-pointer h-auto"
+                    <div className="flex items-center gap-2.5">
+                        <Button
+                            variant="outline"
+                            asChild
+                            className="rounded-xl border-slate-200 dark:border-neutral-800 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-neutral-800"
+                        >
+                            <a
+                                href="/"
+                                target="_blank"
+                                rel="noopener noreferrer"
                             >
-                                <Plus className="h-4 w-4 stroke-[3]" />
-                                <span>Tambah Menu Baru</span>
-                            </Button>
-                        </div>
+                                <ExternalLink className="h-4 w-4 mr-1.5 text-[#8B142C] dark:text-gold-400" />
+                                <span>Buka Navbar Publik</span>
+                            </a>
+                        </Button>
+                        <Button
+                            onClick={() => handleOpenCreateDialog(null)}
+                            className="rounded-xl bg-[#8B142C] hover:bg-[#721024] text-white font-bold text-xs shadow-xs"
+                        >
+                            <Plus className="h-4 w-4 mr-1.5" />
+                            <span>Tambah Menu Baru</span>
+                        </Button>
                     </div>
                 </div>
 

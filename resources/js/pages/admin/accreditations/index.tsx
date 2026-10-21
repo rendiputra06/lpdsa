@@ -1,5 +1,6 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
+    AlertTriangle,
     Award,
     Building2,
     Calendar,
@@ -7,22 +8,23 @@ import {
     Clock,
     Download,
     Edit,
-    FileCheck,
     GraduationCap,
+    History,
     Plus,
     RefreshCw,
     Search,
     Trash,
-    Upload,
     X,
 } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
+import AccreditationTimeline from '@/components/accreditation-timeline';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
@@ -95,56 +97,20 @@ const COMMON_BODIES = [
     'LAMSAMA',
 ];
 
-const COMMON_GRADES = [
-    'Unggul',
-    'Baik Sekali',
-    'Baik',
-    'A',
-    'B',
-    'C',
-    'Terakreditasi Sementara',
-];
-
 export default function Index({ accreditations, stats, academicUnits, filters }: Props) {
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [editingItem, setEditingItem] = useState<Accreditation | null>(null);
-    const [selectedUnitId, setSelectedUnitId] = useState<string>('custom');
+    const [selectedHistoryItem, setSelectedHistoryItem] = useState<Accreditation | null>(null);
+    const [itemToDelete, setItemToDelete] = useState<Accreditation | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const { data, setData, post, processing, reset, errors } = useForm<{
-        _method: string;
-        academic_unit_id: string;
-        unit_type: 'university' | 'faculty' | 'study_program';
-        unit_name: string;
-        level: string;
-        faculty_name: string;
-        accreditation_body: string;
-        grade: string;
-        sk_number: string;
-        sk_date: string;
-        valid_until: string;
-        status: 'active' | 'expired' | 'in_process';
-        certificate_file: File | null;
-        delete_certificate: boolean;
-        notes: string;
-    }>({
-        _method: 'POST',
-        academic_unit_id: '',
-        unit_type: 'study_program',
-        unit_name: '',
-        level: 'S1',
-        faculty_name: '',
-        accreditation_body: 'BAN-PT',
-        grade: 'Baik Sekali',
-        sk_number: '',
-        sk_date: '',
-        valid_until: '',
-        status: 'active',
-        certificate_file: null,
-        delete_certificate: false,
-        notes: '',
-    });
+    const hasActiveFilters = Boolean(
+        (filters.unit_type && filters.unit_type !== 'all') ||
+        (filters.level && filters.level !== 'all') ||
+        (filters.status && filters.status !== 'all') ||
+        (filters.body && filters.body !== 'all') ||
+        filters.search ||
+        (filters.sort && filters.sort !== 'valid_until_desc')
+    );
 
     const handleFilterChange = (key: keyof Filters, value: string) => {
         const nextFilters = {
@@ -157,108 +123,28 @@ export default function Index({ accreditations, stats, academicUnits, filters }:
         });
     };
 
+    const handleResetFilter = () => {
+        setSearchQuery('');
+        router.get('/admin/accreditations', {}, {
+            preserveState: false,
+            preserveScroll: true,
+        });
+    };
+
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         handleFilterChange('search', searchQuery);
     };
 
-    const handleUnitSelect = (unitIdStr: string) => {
-        setSelectedUnitId(unitIdStr);
-
-        if (unitIdStr === 'custom') {
-            setData((prev) => ({
-                ...prev,
-                academic_unit_id: '',
-            }));
-
-            return;
-        }
-
-        const unit = academicUnits.find((u) => u.id.toString() === unitIdStr);
-
-        if (unit) {
-            setData((prev) => ({
-                ...prev,
-                academic_unit_id: unit.id.toString(),
-                unit_type: unit.type,
-                unit_name: unit.name,
-                level: unit.level || '',
-                faculty_name: unit.faculty_name || '',
-            }));
-        }
-    };
-
-    const openCreateDialog = () => {
-        setEditingItem(null);
-        setSelectedUnitId('custom');
-        reset();
-        setData({
-            _method: 'POST',
-            academic_unit_id: '',
-            unit_type: 'study_program',
-            unit_name: '',
-            level: 'S1',
-            faculty_name: '',
-            accreditation_body: 'BAN-PT',
-            grade: 'Baik Sekali',
-            sk_number: '',
-            sk_date: '',
-            valid_until: '',
-            status: 'active',
-            certificate_file: null,
-            delete_certificate: false,
-            notes: '',
-        });
-        setIsDialogOpen(true);
-    };
-
-    const openEditDialog = (item: Accreditation) => {
-        setEditingItem(item);
-        const matchedUnit = academicUnits.find(
-            (u) => u.id === item.academic_unit_id || (u.name === item.unit_name && u.type === item.unit_type)
-        );
-        setSelectedUnitId(matchedUnit ? matchedUnit.id.toString() : 'custom');
-
-        setData({
-            _method: 'PUT',
-            academic_unit_id: item.academic_unit_id ? item.academic_unit_id.toString() : '',
-            unit_type: item.unit_type,
-            unit_name: item.unit_name,
-            level: item.level || '',
-            faculty_name: item.faculty_name || '',
-            accreditation_body: item.accreditation_body,
-            grade: item.grade,
-            sk_number: item.sk_number,
-            sk_date: item.sk_date || '',
-            valid_until: item.valid_until || '',
-            status: item.status,
-            certificate_file: null,
-            delete_certificate: false,
-            notes: item.notes || '',
-        });
-        setIsDialogOpen(true);
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        const url = editingItem
-            ? `/admin/accreditations/${editingItem.id}`
-            : '/admin/accreditations';
-
-        post(url, {
-            forceFormData: true,
-            onSuccess: () => {
-                setIsDialogOpen(false);
-                setEditingItem(null);
-                reset();
+    const handleConfirmDelete = () => {
+        if (!itemToDelete) return;
+        setIsDeleting(true);
+        router.delete(`/admin/accreditations/${itemToDelete.id}`, {
+            onFinish: () => {
+                setIsDeleting(false);
+                setItemToDelete(null);
             },
         });
-    };
-
-    const handleDelete = (item: Accreditation) => {
-        if (confirm(`Apakah Anda yakin ingin menghapus akreditasi untuk "${item.unit_name}"?`)) {
-            router.delete(`/admin/accreditations/${item.id}`);
-        }
     };
 
     const getGradeBadge = (grade: string) => {
@@ -266,38 +152,50 @@ export default function Index({ accreditations, stats, academicUnits, filters }:
 
         if (lower.includes('unggul') || lower === 'a') {
             return (
-                <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">
-                    {grade}
-                </Badge>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                    ★ {grade}
+                </span>
             );
         }
 
         if (lower.includes('baik sekali') || lower === 'b') {
             return (
-                <Badge className="bg-blue-600 hover:bg-blue-700 text-white font-semibold">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                     {grade}
-                </Badge>
+                </span>
             );
         }
 
         if (lower.includes('baik') || lower === 'c') {
             return (
-                <Badge className="bg-amber-600 hover:bg-amber-700 text-white font-semibold">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                     {grade}
-                </Badge>
+                </span>
             );
         }
 
-        return <Badge variant="secondary">{grade}</Badge>;
+        return (
+            <Badge variant="secondary" className="text-[11px] font-semibold">
+                {grade}
+            </Badge>
+        );
     };
 
     const getStatusBadge = (status: string, validUntil: string | null) => {
         if (status === 'expired') {
-            return <Badge variant="destructive">Kedaluwarsa</Badge>;
+            return (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                    Kedaluwarsa
+                </span>
+            );
         }
 
         if (status === 'in_process') {
-            return <Badge className="bg-purple-600 hover:bg-purple-700 text-white">Proses Re-Akreditasi</Badge>;
+            return (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                    Proses Re-Akreditasi
+                </span>
+            );
         }
 
         if (validUntil) {
@@ -307,117 +205,225 @@ export default function Index({ accreditations, stats, academicUnits, filters }:
             sixMonthsFromNow.setMonth(now.getMonth() + 6);
 
             if (until < now) {
-                return <Badge variant="destructive">Kedaluwarsa</Badge>;
+                return (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                        Kedaluwarsa
+                    </span>
+                );
             }
 
             if (until <= sixMonthsFromNow) {
-                return <Badge className="bg-amber-500 hover:bg-amber-600 text-white">Segera Berakhir</Badge>;
+                return (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                        Segera Berakhir
+                    </span>
+                );
             }
         }
 
-        return <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white">Aktif</Badge>;
+        return (
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                Aktif
+            </span>
+        );
     };
 
     return (
         <div className="space-y-6">
             <Head title="Manajemen Data Akreditasi" />
 
-            {/* Header with Title and Primary Actions */}
+            {/* Compact Header sesuai Bab 4 PANDUAN_DESAIN.md */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-                        <Award className="h-7 w-7 text-[#8B142C] dark:text-red-400" />
-                        Data Akreditasi
-                    </h1>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        Kelola sertifikat & peringkat akreditasi Universitas, Fakultas, dan Program Studi
-                    </p>
+                <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-brand-50 text-[#8B142C] dark:bg-brand-950/70 dark:text-gold-400 border border-brand-100 dark:border-brand-900/50 flex items-center justify-center shrink-0 shadow-xs">
+                        <Award className="h-5 w-5 sm:h-6 sm:w-6" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                            Data Akreditasi
+                        </h1>
+                        <p className="text-xs sm:text-sm text-slate-500 dark:text-neutral-400 mt-0.5">
+                            Kelola sertifikat & peringkat akreditasi Universitas, Fakultas, dan Program Studi
+                        </p>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                     <Button
                         variant="outline"
+                        size="sm"
                         asChild
-                        className="gap-2 border-slate-300 dark:border-slate-700"
+                        className="rounded-xl border-slate-300 dark:border-neutral-700 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-neutral-800 gap-2"
                     >
                         <Link href="/admin/academic-units">
-                            <GraduationCap className="h-4 w-4 text-[#8B142C] dark:text-red-400" />
+                            <GraduationCap className="h-4 w-4 text-[#8B142C] dark:text-gold-400" />
                             <span>Data Unit Akademik</span>
                         </Link>
                     </Button>
                     <Button
-                        onClick={openCreateDialog}
-                        className="gap-2 bg-[#8B142C] hover:bg-[#721024] text-white shadow"
+                        size="sm"
+                        asChild
+                        className="rounded-xl bg-[#8B142C] hover:bg-[#721024] text-white text-xs font-bold shadow-xs gap-2"
                     >
-                        <Plus className="h-4 w-4" />
-                        Tambah Akreditasi
+                        <Link href="/admin/accreditations/create">
+                            <Plus className="h-4 w-4" />
+                            <span>Tambah Akreditasi</span>
+                        </Link>
                     </Button>
                 </div>
             </div>
 
-            {/* Metric Summary Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                <Card className="bg-slate-50/50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800">
+            {/* Metric Summary Cards (7 Kolom Responsif dengan Aksen Emas & Warna Semantik) */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                {/* Total */}
+                <Card
+                    onClick={() => handleFilterChange('status', 'all')}
+                    className={`rounded-2xl border border-slate-200/80 dark:border-neutral-800 hover:border-slate-300 dark:hover:border-neutral-700 cursor-pointer transition-all shadow-xs ${
+                        filters.status === 'all' && (!filters.unit_type || filters.unit_type === 'all')
+                            ? 'bg-slate-100/80 dark:bg-neutral-800/80 ring-1 ring-[#8B142C]'
+                            : 'bg-white dark:bg-neutral-900'
+                    }`}
+                    title="Klik untuk tampilkan semua status"
+                >
                     <CardContent className="p-4">
-                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Akreditasi</div>
-                        <div className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{stats.total}</div>
-                    </CardContent>
-                </Card>
-
-                <Card className="bg-slate-50/50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800">
-                    <CardContent className="p-4">
-                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                            <Building2 className="h-3.5 w-3.5 text-blue-500" /> Universitas
+                        <div className="text-[11px] font-bold text-slate-500 dark:text-neutral-400 uppercase tracking-wider">
+                            Total
                         </div>
-                        <div className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{stats.university_count}</div>
-                    </CardContent>
-                </Card>
-
-                <Card className="bg-slate-50/50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800">
-                    <CardContent className="p-4">
-                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                            <Building2 className="h-3.5 w-3.5 text-purple-500" /> Fakultas
+                        <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+                            {stats.total}
                         </div>
-                        <div className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{stats.faculty_count}</div>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-slate-50/50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800">
+                {/* Universitas */}
+                <Card
+                    onClick={() => handleFilterChange('unit_type', filters.unit_type === 'university' ? 'all' : 'university')}
+                    className={`rounded-2xl border border-slate-200/80 dark:border-neutral-800 hover:border-purple-300 dark:hover:border-purple-800 cursor-pointer transition-all shadow-xs ${
+                        filters.unit_type === 'university'
+                            ? 'bg-purple-50/70 dark:bg-purple-950/30 border-purple-300 dark:border-purple-800 ring-1 ring-purple-400'
+                            : 'bg-white dark:bg-neutral-900'
+                    }`}
+                    title="Klik untuk filter akreditasi universitas"
+                >
                     <CardContent className="p-4">
-                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                            <GraduationCap className="h-3.5 w-3.5 text-amber-500" /> Program Studi
+                        <div className="text-[11px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider flex items-center gap-1">
+                            <Building2 className="h-3.5 w-3.5" /> Univ
                         </div>
-                        <div className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{stats.study_program_count}</div>
+                        <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+                            {stats.university_count}
+                        </div>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-slate-50/50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800">
+                {/* Fakultas */}
+                <Card
+                    onClick={() => handleFilterChange('unit_type', filters.unit_type === 'faculty' ? 'all' : 'faculty')}
+                    className={`rounded-2xl border border-slate-200/80 dark:border-neutral-800 hover:border-blue-300 dark:hover:border-blue-800 cursor-pointer transition-all shadow-xs ${
+                        filters.unit_type === 'faculty'
+                            ? 'bg-blue-50/70 dark:bg-blue-950/30 border-blue-300 dark:border-blue-800 ring-1 ring-blue-400'
+                            : 'bg-white dark:bg-neutral-900'
+                    }`}
+                    title="Klik untuk filter akreditasi fakultas"
+                >
                     <CardContent className="p-4">
-                        <div className="text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                        <div className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1">
+                            <Building2 className="h-3.5 w-3.5" /> Fakultas
+                        </div>
+                        <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+                            {stats.faculty_count}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Program Studi */}
+                <Card
+                    onClick={() => handleFilterChange('unit_type', filters.unit_type === 'study_program' ? 'all' : 'study_program')}
+                    className={`rounded-2xl border border-slate-200/80 dark:border-neutral-800 hover:border-amber-300 dark:hover:border-amber-800 cursor-pointer transition-all shadow-xs ${
+                        filters.unit_type === 'study_program'
+                            ? 'bg-amber-50/70 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800 ring-1 ring-amber-400'
+                            : 'bg-white dark:bg-neutral-900'
+                    }`}
+                    title="Klik untuk filter akreditasi program studi"
+                >
+                    <CardContent className="p-4">
+                        <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                            <GraduationCap className="h-3.5 w-3.5" /> Prodi
+                        </div>
+                        <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+                            {stats.study_program_count}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Aktif */}
+                <Card
+                    onClick={() => handleFilterChange('status', filters.status === 'active' ? 'all' : 'active')}
+                    className={`rounded-2xl border border-slate-200/80 dark:border-neutral-800 hover:border-emerald-300 dark:hover:border-emerald-800 cursor-pointer transition-all shadow-xs ${
+                        filters.status === 'active'
+                            ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800 ring-1 ring-emerald-400'
+                            : 'bg-white dark:bg-neutral-900'
+                    }`}
+                    title="Klik untuk filter akreditasi aktif"
+                >
+                    <CardContent className="p-4">
+                        <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1">
                             <CheckCircle2 className="h-3.5 w-3.5" /> Aktif
                         </div>
-                        <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{stats.active_count}</div>
+                        <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                            {stats.active_count}
+                        </div>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-slate-50/50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800">
+                {/* Segera Berakhir */}
+                <Card
+                    onClick={() => handleFilterChange('status', filters.status === 'expiring_soon' ? 'all' : 'expiring_soon')}
+                    className={`rounded-2xl border border-slate-200/80 dark:border-neutral-800 hover:border-amber-300 dark:hover:border-amber-800 cursor-pointer transition-all shadow-xs ${
+                        filters.status === 'expiring_soon'
+                            ? 'bg-amber-50/70 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800 ring-1 ring-amber-400'
+                            : 'bg-white dark:bg-neutral-900'
+                    }`}
+                    title="Klik untuk filter akreditasi yang segera berakhir (≤ 6 bulan)"
+                >
                     <CardContent className="p-4">
-                        <div className="text-xs font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                            <Clock className="h-3.5 w-3.5" /> Segera Berakhir
+                        <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5" /> Segera Habis
                         </div>
-                        <div className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">{stats.expiring_soon_count}</div>
+                        <div className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">
+                            {stats.expiring_soon_count}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Kedaluwarsa */}
+                <Card
+                    onClick={() => handleFilterChange('status', filters.status === 'expired' ? 'all' : 'expired')}
+                    className={`rounded-2xl border border-slate-200/80 dark:border-neutral-800 hover:border-rose-300 dark:hover:border-rose-800 cursor-pointer transition-all shadow-xs ${
+                        filters.status === 'expired'
+                            ? 'bg-rose-50/70 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800 ring-1 ring-rose-400'
+                            : 'bg-white dark:bg-neutral-900'
+                    }`}
+                    title="Klik untuk filter akreditasi yang telah kedaluwarsa"
+                >
+                    <CardContent className="p-4">
+                        <div className="text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider flex items-center gap-1">
+                            <AlertTriangle className="h-3.5 w-3.5" /> Kedaluwarsa
+                        </div>
+                        <div className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-1">
+                            {stats.expired_count}
+                        </div>
                     </CardContent>
                 </Card>
             </div>
 
-            {/* Filter and Tab Navigation Card */}
-            <Card className="border-slate-200 dark:border-slate-800">
-                <CardHeader className="p-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+            {/* Filter and Tab Navigation Card (Bab 5 PANDUAN_DESAIN.md) */}
+            <Card className="rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-xs">
+                <CardHeader className="p-4 pb-3 border-b border-slate-100 dark:border-neutral-800">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         {/* Unit Type Tab Buttons */}
-                        <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-900 rounded-lg">
+                        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-neutral-800 rounded-xl">
                             {[
-                                { key: 'all', label: 'Semua' },
+                                { key: 'all', label: 'Semua Entitas' },
                                 { key: 'university', label: 'Universitas' },
                                 { key: 'faculty', label: 'Fakultas' },
                                 { key: 'study_program', label: 'Program Studi' },
@@ -426,10 +432,10 @@ export default function Index({ accreditations, stats, academicUnits, filters }:
                                     key={tab.key}
                                     type="button"
                                     onClick={() => handleFilterChange('unit_type', tab.key)}
-                                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                                        filters.unit_type === tab.key
-                                            ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm font-semibold'
-                                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                                        filters.unit_type === tab.key || (!filters.unit_type && tab.key === 'all')
+                                            ? 'bg-white dark:bg-neutral-900 text-slate-900 dark:text-white shadow-xs font-bold'
+                                            : 'text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'
                                     }`}
                                 >
                                     {tab.label}
@@ -437,48 +443,68 @@ export default function Index({ accreditations, stats, academicUnits, filters }:
                             ))}
                         </div>
 
-                        {/* Search Input */}
-                        <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
-                            <div className="relative">
-                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                                <Input
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Cari nama, SK, peringkat..."
-                                    className="pl-9 h-9 w-60 text-xs"
-                                />
-                                {searchQuery && (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setSearchQuery('');
-                                            handleFilterChange('search', '');
-                                        }}
-                                        className="absolute right-2 top-2.5 text-slate-400 hover:text-slate-600"
-                                    >
-                                        <X className="h-4 w-4" />
-                                    </button>
-                                )}
-                            </div>
-                            <Button type="submit" variant="secondary" size="sm" className="h-9">
-                                Cari
-                            </Button>
-                        </form>
+                        {/* Search Input and Reset Action */}
+                        <div className="flex items-center gap-2">
+                            <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                                    <Input
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="Cari nama, SK, peringkat..."
+                                        className="pl-9 h-9 w-60 sm:w-68 text-xs rounded-xl border-slate-200 dark:border-neutral-800"
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setSearchQuery('');
+                                                handleFilterChange('search', '');
+                                            }}
+                                            className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-neutral-300"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </button>
+                                    )}
+                                </div>
+                                <Button
+                                    type="submit"
+                                    variant="secondary"
+                                    size="sm"
+                                    className="h-9 rounded-xl text-xs font-semibold"
+                                >
+                                    Cari
+                                </Button>
+                            </form>
+
+                            {hasActiveFilters && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={handleResetFilter}
+                                    className="h-9 rounded-xl text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/50 gap-1.5"
+                                >
+                                    <X className="h-3.5 w-3.5" />
+                                    <span>Reset Filter</span>
+                                </Button>
+                            )}
+                        </div>
                     </div>
 
                     {/* Secondary Filters Bar */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 pt-3 border-t border-slate-100 dark:border-neutral-800/80">
                         {/* Level Filter */}
                         <div>
-                            <Label className="text-[11px] text-slate-500 font-medium">Jenjang</Label>
+                            <Label className="text-[11px] text-slate-500 dark:text-neutral-400 font-semibold">Jenjang</Label>
                             <Select
                                 value={filters.level}
                                 onValueChange={(val) => handleFilterChange('level', val)}
                             >
-                                <SelectTrigger className="h-8 text-xs mt-1">
+                                <SelectTrigger className="h-9 text-xs mt-1 rounded-xl border-slate-200 dark:border-neutral-800">
                                     <SelectValue placeholder="Semua Jenjang" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="rounded-xl">
                                     <SelectItem value="all">Semua Jenjang</SelectItem>
                                     <SelectItem value="D3">Diploma 3 (D3)</SelectItem>
                                     <SelectItem value="D4">Diploma 4 / Sarjana Terapan (D4)</SelectItem>
@@ -492,15 +518,15 @@ export default function Index({ accreditations, stats, academicUnits, filters }:
 
                         {/* Body Filter */}
                         <div>
-                            <Label className="text-[11px] text-slate-500 font-medium">Lembaga Akreditasi</Label>
+                            <Label className="text-[11px] text-slate-500 dark:text-neutral-400 font-semibold">Lembaga Akreditasi</Label>
                             <Select
                                 value={filters.body}
                                 onValueChange={(val) => handleFilterChange('body', val)}
                             >
-                                <SelectTrigger className="h-8 text-xs mt-1">
+                                <SelectTrigger className="h-9 text-xs mt-1 rounded-xl border-slate-200 dark:border-neutral-800">
                                     <SelectValue placeholder="Semua Lembaga" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="rounded-xl">
                                     <SelectItem value="all">Semua Lembaga</SelectItem>
                                     {COMMON_BODIES.map((body) => (
                                         <SelectItem key={body} value={body}>
@@ -513,36 +539,37 @@ export default function Index({ accreditations, stats, academicUnits, filters }:
 
                         {/* Status Filter */}
                         <div>
-                            <Label className="text-[11px] text-slate-500 font-medium">Status</Label>
+                            <Label className="text-[11px] text-slate-500 dark:text-neutral-400 font-semibold">Status Masa Berlaku</Label>
                             <Select
                                 value={filters.status}
                                 onValueChange={(val) => handleFilterChange('status', val)}
                             >
-                                <SelectTrigger className="h-8 text-xs mt-1">
+                                <SelectTrigger className="h-9 text-xs mt-1 rounded-xl border-slate-200 dark:border-neutral-800">
                                     <SelectValue placeholder="Semua Status" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="rounded-xl">
                                     <SelectItem value="all">Semua Status</SelectItem>
-                                    <SelectItem value="active">Aktif</SelectItem>
+                                    <SelectItem value="active">Aktif (Berlaku)</SelectItem>
+                                    <SelectItem value="expiring_soon">Segera Berakhir (≤ 6 Bulan)</SelectItem>
                                     <SelectItem value="expired">Kedaluwarsa</SelectItem>
-                                    <SelectItem value="in_process">Dalam Proses</SelectItem>
+                                    <SelectItem value="in_process">Dalam Proses Re-Akreditasi</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
 
                         {/* Sort Filter */}
                         <div>
-                            <Label className="text-[11px] text-slate-500 font-medium">Urutan</Label>
+                            <Label className="text-[11px] text-slate-500 dark:text-neutral-400 font-semibold">Urutan Data</Label>
                             <Select
                                 value={filters.sort}
                                 onValueChange={(val) => handleFilterChange('sort', val)}
                             >
-                                <SelectTrigger className="h-8 text-xs mt-1">
+                                <SelectTrigger className="h-9 text-xs mt-1 rounded-xl border-slate-200 dark:border-neutral-800">
                                     <SelectValue placeholder="Masa Berlaku (Terbaru)" />
                                 </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="valid_until_desc">Masa Berlaku (Terlama/Terjauh)</SelectItem>
-                                    <SelectItem value="valid_until_asc">Masa Berlaku (Terdekat Berakhir)</SelectItem>
+                                <SelectContent className="rounded-xl">
+                                    <SelectItem value="valid_until_desc">Masa Berlaku (Terjauh / Terbaru)</SelectItem>
+                                    <SelectItem value="valid_until_asc">Masa Berlaku (Terdekat Habis)</SelectItem>
                                     <SelectItem value="name_asc">Nama Entitas (A-Z)</SelectItem>
                                     <SelectItem value="latest">Terakhir Ditambahkan</SelectItem>
                                 </SelectContent>
@@ -551,163 +578,222 @@ export default function Index({ accreditations, stats, academicUnits, filters }:
                     </div>
                 </CardHeader>
 
+                {/* Table Data (Bab 6 PANDUAN_DESAIN.md dengan overflow-x-auto & font standar) */}
                 <CardContent className="p-0">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="bg-slate-50/70 dark:bg-slate-900/50">
-                                <TableHead className="w-[30%]">Entitas & Jenjang</TableHead>
-                                <TableHead className="w-[18%]">Lembaga & SK</TableHead>
-                                <TableHead className="w-[14%]">Peringkat</TableHead>
-                                <TableHead className="w-[18%]">Masa Berlaku</TableHead>
-                                <TableHead className="w-[10%] text-center">Sertifikat</TableHead>
-                                <TableHead className="w-[10%] text-right">Aksi</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {accreditations.data.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-12 text-slate-500 dark:text-slate-400">
-                                        <Award className="h-10 w-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-                                        <p className="font-medium text-slate-700 dark:text-slate-300">Tidak ada data akreditasi ditemukan</p>
-                                        <p className="text-xs text-slate-400 mt-1">
-                                            Coba ubah kata kunci pencarian atau filter yang diterapkan.
-                                        </p>
-                                    </TableCell>
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader className="bg-slate-50/75 dark:bg-neutral-800/50">
+                                <TableRow className="border-b border-slate-100 dark:border-neutral-800">
+                                    <TableHead className="w-[30%] text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-neutral-400">
+                                        Entitas & Jenjang
+                                    </TableHead>
+                                    <TableHead className="w-[18%] text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-neutral-400">
+                                        Lembaga & SK
+                                    </TableHead>
+                                    <TableHead className="w-[14%] text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-neutral-400">
+                                        Peringkat
+                                    </TableHead>
+                                    <TableHead className="w-[18%] text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-neutral-400">
+                                        Masa Berlaku
+                                    </TableHead>
+                                    <TableHead className="w-[10%] text-center text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-neutral-400">
+                                        Sertifikat
+                                    </TableHead>
+                                    <TableHead className="w-[10%] text-right text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-neutral-400">
+                                        Aksi
+                                    </TableHead>
                                 </TableRow>
-                            ) : (
-                                accreditations.data.map((item) => (
-                                    <TableRow key={item.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-900/40">
-                                        {/* Unit & Level */}
-                                        <TableCell>
-                                            <div className="flex flex-col gap-1">
-                                                <div className="flex items-center gap-1.5 flex-wrap">
-                                                    {item.unit_type === 'university' && (
-                                                        <Badge variant="outline" className="border-blue-500/40 text-blue-600 dark:text-blue-400 text-[10px] px-1.5 py-0">
-                                                            Universitas
-                                                        </Badge>
-                                                    )}
-                                                    {item.unit_type === 'faculty' && (
-                                                        <Badge variant="outline" className="border-purple-500/40 text-purple-600 dark:text-purple-400 text-[10px] px-1.5 py-0">
-                                                            Fakultas
-                                                        </Badge>
-                                                    )}
-                                                    {item.unit_type === 'study_program' && (
-                                                        <Badge variant="outline" className="border-amber-500/40 text-amber-600 dark:text-amber-400 text-[10px] px-1.5 py-0">
-                                                            Prodi {item.level && `(${item.level})`}
-                                                        </Badge>
-                                                    )}
+                            </TableHeader>
+                            <TableBody>
+                                {accreditations.data.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="p-0">
+                                            {/* Empty State Bab 10 PANDUAN_DESAIN.md */}
+                                            <div className="p-12 text-center rounded-2xl border border-dashed border-slate-200 dark:border-neutral-800 bg-white/50 dark:bg-neutral-900/50 my-6 mx-4">
+                                                <div className="h-14 w-14 rounded-2xl bg-brand-50 dark:bg-brand-950/60 text-[#8B142C] dark:text-gold-400 flex items-center justify-center mx-auto mb-4">
+                                                    <Award className="h-7 w-7" />
                                                 </div>
-                                                <span className="font-semibold text-slate-900 dark:text-white text-sm">
-                                                    {item.unit_name}
-                                                </span>
-                                                {item.faculty_name && (
-                                                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                                                        {item.faculty_name}
-                                                    </span>
+                                                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                                    Tidak Ada Data Akreditasi Ditemukan
+                                                </h3>
+                                                <p className="text-xs text-slate-500 dark:text-neutral-400 mt-1 max-w-sm mx-auto">
+                                                    Silakan periksa kata kunci pencarian Anda atau sesuaikan filter untuk melihat data lainnya.
+                                                </p>
+                                                {hasActiveFilters && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={handleResetFilter}
+                                                        className="mt-4 rounded-xl text-xs gap-1.5 border-slate-300 dark:border-neutral-700 text-slate-700 dark:text-neutral-300"
+                                                    >
+                                                        <RefreshCw className="h-3.5 w-3.5" />
+                                                        <span>Reset Semua Filter</span>
+                                                    </Button>
                                                 )}
-                                            </div>
-                                        </TableCell>
-
-                                        {/* Body & SK */}
-                                        <TableCell>
-                                            <div className="flex flex-col gap-0.5">
-                                                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                                    {item.accreditation_body}
-                                                </span>
-                                                <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                                                    {item.sk_number}
-                                                </span>
-                                                {item.sk_date && (
-                                                    <span className="text-[11px] text-slate-400">
-                                                        SK: {new Date(item.sk_date).toLocaleDateString('id-ID')}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </TableCell>
-
-                                        {/* Grade */}
-                                        <TableCell>
-                                            {getGradeBadge(item.grade)}
-                                        </TableCell>
-
-                                        {/* Validity & Status */}
-                                        <TableCell>
-                                            <div className="flex flex-col gap-1">
-                                                <div>{getStatusBadge(item.status, item.valid_until)}</div>
-                                                <span className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1">
-                                                    <Calendar className="h-3 w-3 text-slate-400" />
-                                                    {item.valid_until
-                                                        ? new Date(item.valid_until).toLocaleDateString('id-ID', {
-                                                              day: 'numeric',
-                                                              month: 'short',
-                                                              year: 'numeric',
-                                                          })
-                                                        : 'Belum ditentukan'}
-                                                </span>
-                                            </div>
-                                        </TableCell>
-
-                                        {/* Certificate file */}
-                                        <TableCell className="text-center">
-                                            {item.certificate_file ? (
-                                                <a
-                                                    href={`/storage/${item.certificate_file}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 hover:underline p-1.5 rounded-md hover:bg-blue-50 dark:hover:bg-blue-950/40"
-                                                    title="Unduh / Lihat Sertifikat"
-                                                >
-                                                    <Download className="h-4 w-4" />
-                                                    <span>Unduh</span>
-                                                </a>
-                                            ) : (
-                                                <span className="text-xs text-slate-400 italic">-</span>
-                                            )}
-                                        </TableCell>
-
-                                        {/* Actions */}
-                                        <TableCell className="text-right">
-                                            <div className="flex items-center justify-end gap-1">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => openEditDialog(item)}
-                                                    className="h-8 w-8 text-slate-600 hover:text-slate-900"
-                                                    title="Edit Akreditasi"
-                                                >
-                                                    <Edit className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => handleDelete(item)}
-                                                    className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40"
-                                                    title="Hapus Akreditasi"
-                                                >
-                                                    <Trash className="h-4 w-4" />
-                                                </Button>
                                             </div>
                                         </TableCell>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
+                                ) : (
+                                    accreditations.data.map((item) => (
+                                        <TableRow
+                                            key={item.id}
+                                            className="hover:bg-slate-50/60 dark:hover:bg-neutral-800/40 border-b border-slate-100 dark:border-neutral-800/80 transition-colors"
+                                        >
+                                            {/* Unit & Level */}
+                                            <TableCell className="py-3.5 px-4">
+                                                <div className="flex flex-col gap-1">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        {item.unit_type === 'university' && (
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                                                                Universitas
+                                                            </span>
+                                                        )}
+                                                        {item.unit_type === 'faculty' && (
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                                                                Fakultas
+                                                            </span>
+                                                        )}
+                                                        {item.unit_type === 'study_program' && (
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                                                Prodi {item.level && `(${item.level})`}
+                                                            </span>
+                                                        )}
+                                                        {item.academic_unit?.accreditations && item.academic_unit.accreditations.length > 1 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setSelectedHistoryItem(item)}
+                                                                className="inline-flex items-center gap-1 text-[10px] text-amber-700 dark:text-gold-400 font-semibold hover:underline bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-900/60 transition-colors cursor-pointer"
+                                                                title="Lihat linimasa riwayat periode"
+                                                            >
+                                                                <History className="h-2.5 w-2.5" />
+                                                                <span>{item.academic_unit.accreditations.length} Periode</span>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">
+                                                        {item.unit_name}
+                                                    </span>
+                                                    {item.faculty_name && (
+                                                        <span className="text-[11px] text-slate-500 dark:text-neutral-400">
+                                                            {item.faculty_name}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+
+                                            {/* Body & SK */}
+                                            <TableCell className="py-3.5 px-4">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className="text-xs font-bold text-slate-800 dark:text-neutral-200">
+                                                        {item.accreditation_body}
+                                                    </span>
+                                                    <span className="text-xs text-slate-500 dark:text-neutral-400 font-mono">
+                                                        {item.sk_number}
+                                                    </span>
+                                                    {item.sk_date && (
+                                                        <span className="text-[11px] text-slate-400 dark:text-neutral-500">
+                                                            SK: {new Date(item.sk_date).toLocaleDateString('id-ID')}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+
+                                            {/* Grade */}
+                                            <TableCell className="py-3.5 px-4">
+                                                {getGradeBadge(item.grade)}
+                                            </TableCell>
+
+                                            {/* Validity & Status */}
+                                            <TableCell className="py-3.5 px-4">
+                                                <div className="flex flex-col gap-1">
+                                                    <div>{getStatusBadge(item.status, item.valid_until)}</div>
+                                                    <span className="text-xs text-slate-600 dark:text-neutral-300 flex items-center gap-1">
+                                                        <Calendar className="h-3 w-3 text-slate-400" />
+                                                        {item.valid_until
+                                                            ? new Date(item.valid_until).toLocaleDateString('id-ID', {
+                                                                  day: 'numeric',
+                                                                  month: 'short',
+                                                                  year: 'numeric',
+                                                              })
+                                                            : 'Belum ditentukan'}
+                                                    </span>
+                                                </div>
+                                            </TableCell>
+
+                                            {/* Certificate file */}
+                                            <TableCell className="py-3.5 px-4 text-center">
+                                                {item.certificate_file ? (
+                                                    <a
+                                                        href={`/storage/${item.certificate_file}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 hover:underline p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/40 font-semibold"
+                                                        title="Unduh / Lihat Salinan Sertifikat"
+                                                    >
+                                                        <Download className="h-4 w-4" />
+                                                        <span>Unduh</span>
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-xs text-slate-400 dark:text-neutral-500 italic">-</span>
+                                                )}
+                                            </TableCell>
+
+                                            {/* Actions (Bab 7 Ghost Link Icon) */}
+                                            <TableCell className="py-3.5 px-4 text-right">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => setSelectedHistoryItem(item)}
+                                                        className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg cursor-pointer"
+                                                        title="Lihat Riwayat Periode"
+                                                    >
+                                                        <History className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        asChild
+                                                        className="h-8 w-8 text-slate-600 hover:text-[#8B142C] hover:bg-slate-50 dark:hover:bg-neutral-800 rounded-lg"
+                                                        title="Edit Akreditasi"
+                                                    >
+                                                        <Link href={`/admin/accreditations/${item.id}/edit`}>
+                                                            <Edit className="h-4 w-4" />
+                                                        </Link>
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => setItemToDelete(item)}
+                                                        className="h-8 w-8 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg cursor-pointer"
+                                                        title="Hapus Akreditasi"
+                                                    >
+                                                        <Trash className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </CardContent>
 
-                {/* Pagination */}
+                {/* Pagination (Bab 6 PANDUAN_DESAIN.md) */}
                 {accreditations.last_page > 1 && (
-                    <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+                    <div className="p-4 border-t border-slate-100 dark:border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-neutral-400">
                         <div>
                             Menampilkan data ke{' '}
-                            <span className="font-semibold text-slate-700 dark:text-slate-300">
+                            <span className="font-bold text-slate-800 dark:text-neutral-200">
                                 {(accreditations.current_page - 1) * accreditations.per_page + 1}
                             </span>{' '}
                             -{' '}
-                            <span className="font-semibold text-slate-700 dark:text-slate-300">
+                            <span className="font-bold text-slate-800 dark:text-neutral-200">
                                 {Math.min(accreditations.current_page * accreditations.per_page, accreditations.total)}
                             </span>{' '}
-                            dari <span className="font-semibold text-slate-700 dark:text-slate-300">{accreditations.total}</span> total
+                            dari <span className="font-bold text-slate-800 dark:text-neutral-200">{accreditations.total}</span> total
                         </div>
                         <div className="flex items-center gap-1">
                             {accreditations.links.map((link, idx) => (
@@ -715,17 +801,17 @@ export default function Index({ accreditations, stats, academicUnits, filters }:
                                     <span
                                         key={idx}
                                         dangerouslySetInnerHTML={{ __html: link.label }}
-                                        className="px-2.5 py-1 rounded text-xs text-slate-300 dark:text-neutral-600 cursor-not-allowed select-none"
+                                        className="px-2.5 py-1 rounded-lg text-xs text-slate-300 dark:text-neutral-600 cursor-not-allowed select-none"
                                     />
                                 ) : (
                                     <Link
                                         key={idx}
                                         href={link.url}
                                         preserveScroll
-                                        className={`px-2.5 py-1 rounded text-xs transition-colors ${
+                                        className={`px-3 py-1 rounded-lg text-xs transition-colors ${
                                             link.active
-                                                ? 'bg-[#8B142C] text-white font-semibold'
-                                                : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
+                                                ? 'bg-[#8B142C] text-white font-bold shadow-xs'
+                                                : 'text-slate-600 hover:bg-slate-100 dark:text-neutral-400 dark:hover:bg-neutral-800 font-medium'
                                         }`}
                                         dangerouslySetInnerHTML={{ __html: link.label }}
                                     />
@@ -736,354 +822,86 @@ export default function Index({ accreditations, stats, academicUnits, filters }:
                 )}
             </Card>
 
-            {/* Create / Edit Modal Dialog */}
+            {/* Modal Dialog Linimasa Riwayat Akreditasi */}
             <Dialog
-                open={isDialogOpen}
+                open={!!selectedHistoryItem}
                 onOpenChange={(open) => {
-                    setIsDialogOpen(open);
-
                     if (!open) {
-                        setEditingItem(null);
-                        reset();
+                        setSelectedHistoryItem(null);
                     }
                 }}
             >
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto rounded-3xl p-6 border-slate-200 dark:border-neutral-800">
                     <DialogHeader>
-                        <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                            <Award className="h-5 w-5 text-[#8B142C]" />
-                            {editingItem ? 'Edit Data Akreditasi' : 'Tambah Data Akreditasi Baru'}
+                        <DialogTitle className="text-lg font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+                            <Clock className="h-5 w-5 text-amber-600 dark:text-gold-400" />
+                            <span>Riwayat Akreditasi — {selectedHistoryItem?.unit_name}</span>
                         </DialogTitle>
+                        <DialogDescription className="text-xs text-slate-500 dark:text-neutral-400">
+                            Kronologi masa berlaku sertifikat dan arsip SK akreditasi lintas periode
+                        </DialogDescription>
                     </DialogHeader>
 
-                    <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-                        {/* Pilih dari Unit Akademik Master */}
-                        <div className="space-y-1.5 p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                            <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between">
-                                <span>Pilih Entitas dari Master Data API</span>
-                                <span className="text-[11px] font-normal text-slate-500">
-                                    Otomatis mengisi nama, fakultas, dan jenjang
-                                </span>
-                            </Label>
-                            <Select
-                                value={selectedUnitId}
-                                onValueChange={handleUnitSelect}
-                            >
-                                <SelectTrigger className="h-9 text-xs">
-                                    <SelectValue placeholder="Pilih entitas terdaftar atau input manual" />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-60">
-                                    <SelectItem value="custom">-- Input Manual / Belum Terdaftar --</SelectItem>
-                                    <SelectItem disabled value="__group_univ" className="font-bold text-slate-400">
-                                        --- UNIVERSITAS ---
-                                    </SelectItem>
-                                    {academicUnits
-                                        .filter((u) => u.type === 'university')
-                                        .map((u) => (
-                                            <SelectItem key={u.id} value={u.id.toString()}>
-                                                🏛️ {u.name}
-                                            </SelectItem>
-                                        ))}
-
-                                    <SelectItem disabled value="__group_fac" className="font-bold text-slate-400">
-                                        --- FAKULTAS ---
-                                    </SelectItem>
-                                    {academicUnits
-                                        .filter((u) => u.type === 'faculty')
-                                        .map((u) => (
-                                            <SelectItem key={u.id} value={u.id.toString()}>
-                                                🏢 {u.name}
-                                            </SelectItem>
-                                        ))}
-
-                                    <SelectItem disabled value="__group_prodi" className="font-bold text-slate-400">
-                                        --- PROGRAM STUDI ---
-                                    </SelectItem>
-                                    {academicUnits
-                                        .filter((u) => u.type === 'study_program')
-                                        .map((u) => (
-                                            <SelectItem key={u.id} value={u.id.toString()}>
-                                                🎓 [{u.level}] {u.name} ({u.faculty_name})
-                                            </SelectItem>
-                                        ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        {/* Jenis Entitas & Jenjang */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div className="space-y-1.5">
-                                <Label htmlFor="unit_type" className="text-xs">
-                                    Tingkat Entitas <span className="text-red-500">*</span>
-                                </Label>
-                                <Select
-                                    value={data.unit_type}
-                                    onValueChange={(val: 'university' | 'faculty' | 'study_program') =>
-                                        setData('unit_type', val)
-                                    }
-                                >
-                                    <SelectTrigger id="unit_type" className="h-9 text-xs">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="university">Universitas</SelectItem>
-                                        <SelectItem value="faculty">Fakultas</SelectItem>
-                                        <SelectItem value="study_program">Program Studi</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {errors.unit_type && <p className="text-red-500 text-[11px]">{errors.unit_type}</p>}
-                            </div>
-
-                            <div className="space-y-1.5 sm:col-span-2">
-                                <Label htmlFor="unit_name" className="text-xs">
-                                    Nama Entitas (Univ / Fak / Prodi) <span className="text-red-500">*</span>
-                                </Label>
-                                <Input
-                                    id="unit_name"
-                                    value={data.unit_name}
-                                    onChange={(e) => setData('unit_name', e.target.value)}
-                                    placeholder="Contoh: S1 Kedokteran"
-                                    className="h-9 text-xs"
-                                />
-                                {errors.unit_name && <p className="text-red-500 text-[11px]">{errors.unit_name}</p>}
-                            </div>
-                        </div>
-
-                        {/* Jenjang & Nama Fakultas */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <Label htmlFor="level" className="text-xs">
-                                    Jenjang (Khusus Prodi)
-                                </Label>
-                                <Select
-                                    value={data.level || 'none'}
-                                    onValueChange={(val) => setData('level', val === 'none' ? '' : val)}
-                                >
-                                    <SelectTrigger id="level" className="h-9 text-xs">
-                                        <SelectValue placeholder="Pilih jenjang (bila Prodi)" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="none">-- Tanpa Jenjang --</SelectItem>
-                                        <SelectItem value="D3">Diploma 3 (D3)</SelectItem>
-                                        <SelectItem value="D4">Diploma 4 / Sarjana Terapan (D4)</SelectItem>
-                                        <SelectItem value="S1">Sarjana (S1)</SelectItem>
-                                        <SelectItem value="S2">Magister (S2)</SelectItem>
-                                        <SelectItem value="S3">Doktor (S3)</SelectItem>
-                                        <SelectItem value="Profesi">Profesi</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {errors.level && <p className="text-red-500 text-[11px]">{errors.level}</p>}
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <Label htmlFor="faculty_name" className="text-xs">
-                                    Nama Fakultas (Opsional)
-                                </Label>
-                                <Input
-                                    id="faculty_name"
-                                    value={data.faculty_name}
-                                    onChange={(e) => setData('faculty_name', e.target.value)}
-                                    placeholder="Contoh: Fakultas Kedokteran"
-                                    className="h-9 text-xs"
-                                />
-                                {errors.faculty_name && <p className="text-red-500 text-[11px]">{errors.faculty_name}</p>}
-                            </div>
-                        </div>
-
-                        {/* Lembaga Akreditasi & Peringkat */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <Label htmlFor="accreditation_body" className="text-xs">
-                                    Lembaga Akreditasi <span className="text-red-500">*</span>
-                                </Label>
-                                <Input
-                                    id="accreditation_body"
-                                    value={data.accreditation_body}
-                                    onChange={(e) => setData('accreditation_body', e.target.value)}
-                                    placeholder="BAN-PT / LAM-PTKes / LAM INFOKOM"
-                                    className="h-9 text-xs"
-                                    list="body-options"
-                                />
-                                <datalist id="body-options">
-                                    {COMMON_BODIES.map((b) => (
-                                        <option key={b} value={b} />
-                                    ))}
-                                </datalist>
-                                {errors.accreditation_body && (
-                                    <p className="text-red-500 text-[11px]">{errors.accreditation_body}</p>
-                                )}
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <Label htmlFor="grade" className="text-xs">
-                                    Peringkat Akreditasi <span className="text-red-500">*</span>
-                                </Label>
-                                <Input
-                                    id="grade"
-                                    value={data.grade}
-                                    onChange={(e) => setData('grade', e.target.value)}
-                                    placeholder="Unggul / Baik Sekali / A / B"
-                                    className="h-9 text-xs"
-                                    list="grade-options"
-                                />
-                                <datalist id="grade-options">
-                                    {COMMON_GRADES.map((g) => (
-                                        <option key={g} value={g} />
-                                    ))}
-                                </datalist>
-                                {errors.grade && <p className="text-red-500 text-[11px]">{errors.grade}</p>}
-                            </div>
-                        </div>
-
-                        {/* Nomor SK, Tanggal SK & Masa Berlaku */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div className="space-y-1.5">
-                                <Label htmlFor="sk_number" className="text-xs">
-                                    Nomor SK <span className="text-red-500">*</span>
-                                </Label>
-                                <Input
-                                    id="sk_number"
-                                    value={data.sk_number}
-                                    onChange={(e) => setData('sk_number', e.target.value)}
-                                    placeholder="0123/SK/BAN-PT/..."
-                                    className="h-9 text-xs font-mono"
-                                />
-                                {errors.sk_number && <p className="text-red-500 text-[11px]">{errors.sk_number}</p>}
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <Label htmlFor="sk_date" className="text-xs">
-                                    Tanggal SK
-                                </Label>
-                                <Input
-                                    id="sk_date"
-                                    type="date"
-                                    value={data.sk_date}
-                                    onChange={(e) => setData('sk_date', e.target.value)}
-                                    className="h-9 text-xs"
-                                />
-                                {errors.sk_date && <p className="text-red-500 text-[11px]">{errors.sk_date}</p>}
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <Label htmlFor="valid_until" className="text-xs">
-                                    Berlaku Sampai
-                                </Label>
-                                <Input
-                                    id="valid_until"
-                                    type="date"
-                                    value={data.valid_until}
-                                    onChange={(e) => setData('valid_until', e.target.value)}
-                                    className="h-9 text-xs"
-                                />
-                                {errors.valid_until && <p className="text-red-500 text-[11px]">{errors.valid_until}</p>}
-                            </div>
-                        </div>
-
-                        {/* Status Akreditasi */}
-                        <div className="space-y-1.5">
-                            <Label htmlFor="status" className="text-xs">
-                                Status Akreditasi <span className="text-red-500">*</span>
-                            </Label>
-                            <Select
-                                value={data.status}
-                                onValueChange={(val: 'active' | 'expired' | 'in_process') => setData('status', val)}
-                            >
-                                <SelectTrigger id="status" className="h-9 text-xs">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="active">Aktif (Masih Berlaku)</SelectItem>
-                                    <SelectItem value="expired">Kedaluwarsa (Kadaluwarsa)</SelectItem>
-                                    <SelectItem value="in_process">Dalam Proses Re-Akreditasi</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            {errors.status && <p className="text-red-500 text-[11px]">{errors.status}</p>}
-                        </div>
-
-                        {/* Upload Berkas Sertifikat */}
-                        <div className="space-y-1.5">
-                            <Label className="text-xs">Berkas Sertifikat (PDF / JPG / PNG max 5MB)</Label>
-                            <div className="p-3 border border-dashed border-slate-300 dark:border-slate-700 rounded-lg flex flex-col items-center justify-center bg-slate-50/50 dark:bg-slate-900/50 text-center">
-                                <FileCheck className="h-8 w-8 text-slate-400 mb-1" />
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept=".pdf,image/png,image/jpeg,image/webp"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0] || null;
-                                        setData('certificate_file', file);
-                                    }}
-                                    className="hidden"
-                                />
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="mt-1 gap-1 text-xs"
-                                >
-                                    <Upload className="h-3.5 w-3.5" />
-                                    {data.certificate_file ? 'Ganti Berkas' : 'Pilih Berkas Sertifikat'}
-                                </Button>
-                                {data.certificate_file && (
-                                    <p className="text-xs text-emerald-600 font-medium mt-1">
-                                        ✓ Terpilih: {data.certificate_file.name}
-                                    </p>
-                                )}
-                                {editingItem?.certificate_file && !data.certificate_file && (
-                                    <div className="flex items-center gap-2 mt-2 text-xs text-slate-600 dark:text-slate-400">
-                                        <span>Berkas saat ini:</span>
-                                        <a
-                                            href={`/storage/${editingItem.certificate_file}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-blue-600 underline font-mono truncate max-w-xs"
-                                        >
-                                            {editingItem.certificate_file}
-                                        </a>
-                                    </div>
-                                )}
-                            </div>
-                            {errors.certificate_file && (
-                                <p className="text-red-500 text-[11px]">{errors.certificate_file}</p>
-                            )}
-                        </div>
-
-                        {/* Catatan Tambahan */}
-                        <div className="space-y-1.5">
-                            <Label htmlFor="notes" className="text-xs">
-                                Catatan / Keterangan (Opsional)
-                            </Label>
-                            <textarea
-                                id="notes"
-                                rows={2}
-                                value={data.notes}
-                                onChange={(e) => setData('notes', e.target.value)}
-                                placeholder="Keterangan tambahan mengenai akreditasi..."
-                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    {selectedHistoryItem && (
+                        <div className="py-2">
+                            <AccreditationTimeline
+                                items={selectedHistoryItem.academic_unit?.accreditations || [selectedHistoryItem]}
+                                currentId={selectedHistoryItem.id}
+                                showAddButton={true}
+                                academicUnitId={selectedHistoryItem.academic_unit_id || undefined}
+                                unitName={selectedHistoryItem.unit_name}
+                                isAdmin={true}
                             />
-                            {errors.notes && <p className="text-red-500 text-[11px]">{errors.notes}</p>}
                         </div>
+                    )}
+                </DialogContent>
+            </Dialog>
 
-                        <DialogFooter className="pt-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setIsDialogOpen(false)}
-                                className="text-xs"
-                            >
-                                Batal
-                            </Button>
-                            <Button
-                                type="submit"
-                                disabled={processing}
-                                className="bg-[#8B142C] hover:bg-[#721024] text-white text-xs"
-                            >
-                                {editingItem ? 'Simpan Perubahan' : 'Tambah Akreditasi'}
-                            </Button>
-                        </DialogFooter>
-                    </form>
+            {/* Modal Dialog Konfirmasi Hapus Standar Bab 9 PANDUAN_DESAIN.md */}
+            <Dialog
+                open={!!itemToDelete}
+                onOpenChange={(open) => {
+                    if (!open && !isDeleting) {
+                        setItemToDelete(null);
+                    }
+                }}
+            >
+                <DialogContent className="sm:max-w-[440px] rounded-3xl p-6 border-slate-200 dark:border-neutral-800">
+                    <DialogHeader className="items-center text-center">
+                        <div className="h-12 w-12 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 flex items-center justify-center mb-3">
+                            <AlertTriangle className="h-6 w-6" />
+                        </div>
+                        <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">
+                            Hapus Data Akreditasi?
+                        </DialogTitle>
+                        <DialogDescription className="text-xs text-slate-500 dark:text-neutral-400 mt-1 leading-relaxed text-center">
+                            Tindakan ini tidak dapat dibatalkan. Data sertifikat akreditasi untuk{' '}
+                            <span className="font-semibold text-slate-700 dark:text-neutral-200">
+                                {itemToDelete?.unit_name}
+                            </span>{' '}
+                            (No. SK: {itemToDelete?.sk_number}) beserta berkas fisiknya akan dihapus permanen.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <DialogFooter className="mt-6 flex gap-2 sm:justify-center">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setItemToDelete(null)}
+                            disabled={isDeleting}
+                            className="rounded-xl text-xs font-semibold border-slate-300 dark:border-neutral-700"
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleConfirmDelete}
+                            disabled={isDeleting}
+                            className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-xs"
+                        >
+                            {isDeleting ? 'Menghapus...' : 'Ya, Hapus Data'}
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>

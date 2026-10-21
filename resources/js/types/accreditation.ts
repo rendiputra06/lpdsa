@@ -18,6 +18,8 @@ export interface AcademicUnit {
     updated_at?: string;
     parent?: AcademicUnit | null;
     children?: AcademicUnit[];
+    accreditations?: Accreditation[];
+    accreditations_count?: number;
     latest_accreditation?: Accreditation | null;
 }
 
@@ -37,6 +39,7 @@ export interface Accreditation {
     status: AccreditationStatus;
     notes: string | null;
     academic_unit?: AcademicUnit | null;
+    history?: Accreditation[];
     created_at: string;
     updated_at: string;
 }

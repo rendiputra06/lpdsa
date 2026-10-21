@@ -67,7 +67,14 @@ Digunakan untuk menonjolkan elemen unggulan, status akreditasi, rating, call-to-
 ## 3. Pola Desain Khas Univrab (*Signature Patterns*)
 
 ### 1. Banner Hero Gradien Marun dengan Pola Titik
-Digunakan pada bagian atas Landing Page dan Dashboard Admin:
+Digunakan secara **eksklusif** hanya pada bagian atas:
+- **Landing Page Publik** (`/`)
+- **Ringkasan Utama Dashboard Admin** (`/dashboard`)
+
+> [!WARNING]
+> **Larangan Penggunaan (Anti-Pattern):**
+> **JANGAN PERNAH** menyematkan Banner Hero Gradien kartu besar ini pada halaman internal manajemen data / CRUD admin (seperti Kategori, Menu Navigasi, Unit Akademik, Pengumuman, Akreditasi, Pengguna, dsb).
+> Banner besar menghabiskan ruang vertikal (*vertical real estate*) hingga 300px+, mendorong tabel operasional dan tombol aksi penting ke bawah layar (*below the fold*), serta mengganggu efisiensi kerja admin. Untuk seluruh halaman CRUD, gunakan **Standar Compact Header** di Bab 4.
 
 ```tsx
 <div className="relative rounded-3xl bg-linear-to-br from-brand-900 via-brand-800 to-brand-950 text-white p-6 sm:p-8 lg:p-10 shadow-2xl border border-white/10 overflow-hidden">
@@ -174,39 +181,72 @@ Model kartu 3 pilar yang merepresentasikan modul utama LPDSA:
 
 ---
 
-## 4. Standar Header & Toolbar Halaman Admin
+## 4. Standar Header Halaman Admin (Compact Header Standard)
 
-Setiap halaman manajemen data (CRUD) di admin wajib memiliki struktur header yang konsisten:
+Setiap halaman manajemen data (CRUD) di admin **wajib** menggunakan header yang ringkas (*compact*), fungsional, dan hemat ruang vertikal. Hal ini bertujuan agar data utama (metrik & tabel) langsung tampak di viewport awal tanpa perlu *scrolling*.
+
+### A. Anatomi Komponen Header Admin:
+1. **Ikon Squircle Modul**: Ikon Lucide terkait fungsi modul dalam kontainer `h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-brand-50 dark:bg-brand-950/70 text-[#8B142C] dark:text-gold-400 flex items-center justify-center shrink-0 border border-brand-100 dark:border-brand-900/50`.
+2. **Judul Halaman**: `h1` dengan tipografi `text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white`.
+3. **Deskripsi Ringkas**: Maksimal 1 kalimat padat `text-xs sm:text-sm text-slate-500 dark:text-neutral-400 mt-0.5`.
+4. **Grup Tombol Aksi Kanan**:
+   - **Aksi Sekunder (Opsional)**: `Button variant="outline"` dengan `rounded-xl border-slate-200 dark:border-neutral-800 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-neutral-800` (misal: tautan relasi, pratinjau publik, tombol ekspor).
+   - **Aksi Primer**: `Button` berwarna marun khas Univrab `bg-[#8B142C] hover:bg-[#721024] text-white font-bold text-xs rounded-xl shadow-xs` (misal: "Tambah Kategori Baru", "Tambah Menu Baru", "Sinkronkan Data").
+
+### B. Template Kode Header Admin Standar:
 
 ```tsx
-{/* Header Halaman */}
+{/* Header Halaman Admin Standar (Compact & Fungsional) */}
 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-    <div>
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-neutral-400 mb-1">
-            <Link href="/dashboard" className="hover:text-brand-700 dark:hover:text-gold-400">Dashboard</Link>
-            <span>/</span>
-            <span className="text-slate-900 dark:text-white">Unit Akademik</span>
+    <div className="flex items-center gap-3">
+        {/* Ikon Squircle Marun Univrab */}
+        <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-brand-50 dark:bg-brand-950/70 text-[#8B142C] dark:text-gold-400 flex items-center justify-center shrink-0 border border-brand-100 dark:border-brand-900/50">
+            <Tags className="h-5 w-5 sm:h-6 sm:w-6" />
         </div>
-        <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-            Data Unit Akademik
-        </h1>
-        <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
-            Master data fakultas dan program studi Universitas Abdurrab.
-        </p>
+        <div>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                Manajemen Kategori
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-neutral-400 mt-0.5">
+                Kelola taksonomi kategori pengumuman, berita SPMI, dan agenda akreditasi Univrab.
+            </p>
+        </div>
     </div>
 
-    {/* Tombol Aksi Utama */}
+    {/* Tombol Aksi Kanan */}
     <div className="flex items-center gap-2.5">
+        {/* Aksi Sekunder (Opsional) */}
         <Button
-            onClick={handleSync}
-            className="rounded-xl bg-[#8B142C] hover:bg-[#721024] text-white font-bold text-xs shadow-md"
+            variant="outline"
+            asChild
+            className="rounded-xl border-slate-200 dark:border-neutral-800 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-neutral-800"
         >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Sinkronkan Data
+            <Link href="/admin/announcements">
+                <Megaphone className="h-4 w-4 mr-1.5 text-[#8B142C] dark:text-gold-400" />
+                <span>Lihat Pengumuman</span>
+            </Link>
+        </Button>
+
+        {/* Aksi Primer */}
+        <Button
+            onClick={handleOpenCreateDialog}
+            className="rounded-xl bg-[#8B142C] hover:bg-[#721024] text-white font-bold text-xs shadow-xs"
+        >
+            <Plus className="h-4 w-4 mr-1.5" />
+            <span>Tambah Kategori Baru</span>
         </Button>
     </div>
 </div>
 ```
+
+### C. Panduan Do's & Don'ts Header Admin:
+
+| Aspek | ✅ Do (Wajib Diterapkan) | ❌ Don't (Dilarang) |
+|---|---|---|
+| **Ketinggian Vertikal** | Ringkas (50–65px), langsung menyatu dengan alur halaman | Memasang kartu banner hero gradien besar (300px+) dengan padding raksasa |
+| **Ikon Modul** | Squircle `rounded-xl` marun Univrab di sisi kiri judul | Tanpa ikon atau memasang ilustrasi banner promosi yang mendominasi |
+| **Posisi Aksi Utama** | Di sebelah kanan judul (`sm:justify-between`) agar cepat dijangkau | Tersembunyi di dalam kartu banner atau di bawah tabel |
+| **Aksesibilitas Data** | Kartu metrik & tabel data langsung tampak di viewport tanpa harus *scroll* | Mengharuskan admin menggulir layar hanya untuk melihat baris pertama tabel |
 
 ---
 
@@ -430,4 +470,5 @@ Sebelum menyelesaikan pengerjaan halaman baru, pastikan seluruh checklist beriku
 - [ ] **Kurva**: Menggunakan `rounded-2xl` atau `rounded-3xl` untuk kontainer utama, dan sudut asimetris (`rounded-tl-[36px] rounded-br-[36px]`) untuk kartu sorotan/hero.
 - [ ] **Link Inertia**: Selalu memberikan fallback string (`url || '#'`) atau render sebagai `<span>` jika URL bernilai null/undefined untuk mencegah runtime crash.
 - [ ] **Responsivitas**: Desain rapi dan tidak meluap (*overflow*) saat dibuka di perangkat mobile (lebar 360px - 414px).
+- [ ] **Header Ringkas (Compact)**: Menggunakan standar header ringkas berikon squircle marun dan tombol aksi di kanan; TIDAK menggunakan hero banner gradien raksasa pada halaman CRUD/manajemen data.
 - [ ] **Loading & Transition**: Tombol aksi memiliki state disabled dan spinner saat proses asynchronous berjalan.

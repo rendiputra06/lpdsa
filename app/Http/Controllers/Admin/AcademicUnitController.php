@@ -59,14 +59,22 @@ class AcademicUnitController extends Controller
             ->get(['id', 'name', 'code']);
 
         // Hierarchical tree data (University -> Faculties -> Study Programs)
+        $search = $request->get('search');
         $hierarchy = AcademicUnit::where('type', 'university')
             ->with([
                 'latestAccreditation',
-                'children' => function ($q) {
+                'children' => function ($q) use ($search) {
                     $q->orderBy('name')->with([
                         'latestAccreditation',
-                        'children' => function ($sq) {
+                        'children' => function ($sq) use ($search) {
                             $sq->orderBy('level')->orderBy('name')->with('latestAccreditation');
+                            if (!empty($search)) {
+                                $sq->where(function ($sub) use ($search) {
+                                    $sub->where('name', 'like', "%{$search}%")
+                                        ->orWhere('code', 'like', "%{$search}%")
+                                        ->orWhere('level', 'like', "%{$search}%");
+                                });
+                            }
                         },
                     ]);
                 },
@@ -144,7 +152,7 @@ class AcademicUnitController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        $facultyName = null;
+        $facultyName = $request->input('faculty_name');
         if (!empty($validated['parent_id'])) {
             $parent = AcademicUnit::find($validated['parent_id']);
             if ($parent && $parent->type === 'faculty') {
@@ -190,6 +198,10 @@ class AcademicUnitController extends Controller
     public function syncFromApi(AcademicApiService $service)
     {
         $result = $service->syncUnits();
+
+        if (empty($result['success'])) {
+            return redirect()->back()->with('error', $result['message']);
+        }
 
         return redirect()->back()->with('success', $result['message']);
     }
