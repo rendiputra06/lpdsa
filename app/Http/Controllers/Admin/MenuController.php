@@ -73,6 +73,13 @@ class MenuController extends Controller
             $validated['order'] = ($maxOrder ?? 0) + 1;
         }
 
+        if ($validated['type'] === 'internal' && !empty($validated['url']) && $validated['url'] !== '#') {
+            $url = trim($validated['url']);
+            if (!str_starts_with($url, 'http://') && !str_starts_with($url, 'https://') && !str_starts_with($url, 'mailto:') && !str_starts_with($url, 'tel:')) {
+                $validated['url'] = '/' . ltrim($url, '/');
+            }
+        }
+
         Menu::create($validated);
 
         return redirect()->back()->with('success', 'Menu baru berhasil ditambahkan.');
@@ -114,6 +121,13 @@ class MenuController extends Controller
                 if ($parent->depth + $maxOffset > 4) {
                     return redirect()->back()->withErrors(['parent_id' => 'Struktur menu maksimal 4 tingkat. Perpindahan ini akan menyebabkan sub-menu melebihi level 4.']);
                 }
+            }
+        }
+
+        if ($validated['type'] === 'internal' && !empty($validated['url']) && $validated['url'] !== '#') {
+            $url = trim($validated['url']);
+            if (!str_starts_with($url, 'http://') && !str_starts_with($url, 'https://') && !str_starts_with($url, 'mailto:') && !str_starts_with($url, 'tel:')) {
+                $validated['url'] = '/' . ltrim($url, '/');
             }
         }
 

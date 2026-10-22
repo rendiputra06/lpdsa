@@ -90,6 +90,7 @@ const SYSTEM_PRESET_ROUTES = [
     { label: 'Beranda Utama', url: '/' },
     { label: 'Pusat Pengumuman', url: '/announcements' },
     { label: 'Data Akreditasi', url: '/akreditasi' },
+    { label: 'Akreditasi Universitas', url: '/akreditasi/universitas' },
     { label: 'Kontak Kami', url: '/contact' },
     { label: 'Pusat Dokumen', url: '/dokumen' },
 ];
@@ -1007,9 +1008,15 @@ export default function MenuIndex({
                                     id="menu-url"
                                     value={data.url}
                                     onChange={(e) => setData('url', e.target.value)}
+                                    onBlur={(e) => {
+                                        const val = e.target.value.trim();
+                                        if (data.type === 'internal' && val && val !== '#' && !val.startsWith('/') && !val.startsWith('http')) {
+                                            setData('url', `/${val}`);
+                                        }
+                                    }}
                                     placeholder={
                                         data.type === 'internal'
-                                            ? '/visi-misi atau /announcements'
+                                            ? '/akreditasi/universitas atau /announcements'
                                             : 'https://univrab.ac.id'
                                     }
                                     className="rounded-xl border-slate-200 dark:border-neutral-800 text-xs h-10 font-mono focus-visible:ring-brand-700 dark:focus-visible:ring-gold-400"

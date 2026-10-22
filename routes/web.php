@@ -12,6 +12,11 @@ Route::get('/akreditasi', [LandingController::class, 'accreditations'])->name('a
 Route::get('/akreditasi/universitas', [LandingController::class, 'universityAccreditation'])->name('accreditations.university');
 Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap');
 
+// Public SPMI Document Routes
+Route::get('/spmi/penetapan/kebijakan', [\App\Http\Controllers\SpmiPublicController::class, 'kebijakanIndex'])->name('spmi.penetapan.kebijakan.index');
+Route::get('/spmi/penetapan/kebijakan/{category:slug}', [\App\Http\Controllers\SpmiPublicController::class, 'kebijakanCategory'])->name('spmi.penetapan.kebijakan.category');
+Route::get('/spmi/dokumen/share/{document}', [\App\Http\Controllers\SpmiPublicController::class, 'openDocument'])->name('spmi.documents.open');
+
 // Authenticated Routes
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
@@ -33,6 +38,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
         Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
         Route::get('activity-logs', [\App\Http\Controllers\Admin\ActivityLogController::class, 'index'])->name('activity-logs.index');
+
+        // SPMI Documents & Categories Management
+        Route::post('spmi/categories', [\App\Http\Controllers\Admin\SpmiDocumentController::class, 'storeCategory'])->name('spmi.categories.store');
+        Route::put('spmi/categories/{category}', [\App\Http\Controllers\Admin\SpmiDocumentController::class, 'updateCategory'])->name('spmi.categories.update');
+        Route::delete('spmi/categories/{category}', [\App\Http\Controllers\Admin\SpmiDocumentController::class, 'destroyCategory'])->name('spmi.categories.destroy');
+        Route::post('spmi/categories/{category}/publish-menu', [\App\Http\Controllers\Admin\SpmiDocumentController::class, 'publishCategoryToMenu'])->name('spmi.categories.publish-menu');
+        Route::resource('spmi/documents', \App\Http\Controllers\Admin\SpmiDocumentController::class)->names('spmi.documents')->except(['create', 'edit', 'show']);
     });
 });
 

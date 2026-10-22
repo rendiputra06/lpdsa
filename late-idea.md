@@ -2,4 +2,4 @@
 - tombol ke halaman portal utama univrab
 - [x] struktur organisasi bergaris (selesai)
 - [x] detail profil modal isi wewenang dan tanggung jawab (selesai)
-- hilangkan tanggal update
+- hilangkan tanggal update 

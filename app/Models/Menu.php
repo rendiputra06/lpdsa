@@ -17,6 +17,30 @@ class Menu extends Model
         'parent_id',
     ];
 
+    public function getUrlAttribute(?string $value): ?string
+    {
+        if ($this->type === 'internal' && !empty($value) && $value !== '#') {
+            $trimmed = trim($value);
+            if (!str_starts_with($trimmed, 'http://') && !str_starts_with($trimmed, 'https://') && !str_starts_with($trimmed, 'mailto:') && !str_starts_with($trimmed, 'tel:')) {
+                return '/' . ltrim($trimmed, '/');
+            }
+        }
+
+        return $value;
+    }
+
+    public function setUrlAttribute(?string $value): void
+    {
+        if ($this->type === 'internal' && !empty($value) && $value !== '#') {
+            $trimmed = trim($value);
+            if (!str_starts_with($trimmed, 'http://') && !str_starts_with($trimmed, 'https://') && !str_starts_with($trimmed, 'mailto:') && !str_starts_with($trimmed, 'tel:')) {
+                $value = '/' . ltrim($trimmed, '/');
+            }
+        }
+
+        $this->attributes['url'] = $value;
+    }
+
     public function parent()
     {
         return $this->belongsTo(Menu::class, 'parent_id');

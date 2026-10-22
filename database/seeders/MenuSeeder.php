@@ -100,11 +100,19 @@ class MenuSeeder extends Seeder
         ]);
 
         Menu::create([
+            'label' => 'Akreditasi Universitas',
+            'url' => '/akreditasi/universitas',
+            'type' => 'internal',
+            'parent_id' => $layanan->id,
+            'order' => 2,
+        ]);
+
+        Menu::create([
             'label' => 'Pusat Dokumen & SOP',
             'url' => '/dokumen',
             'type' => 'internal',
             'parent_id' => $layanan->id,
-            'order' => 2,
+            'order' => 3,
         ]);
 
         Menu::create([
@@ -112,7 +120,7 @@ class MenuSeeder extends Seeder
             'url' => 'https://spmi.univrab.ac.id',
             'type' => 'external',
             'parent_id' => $layanan->id,
-            'order' => 3,
+            'order' => 4,
         ]);
 
         // 4. Pengumuman

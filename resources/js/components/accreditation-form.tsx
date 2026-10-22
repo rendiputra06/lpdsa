@@ -24,6 +24,7 @@ import {
     Upload,
     X,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import React, { useRef, useState } from 'react';
 import AccreditationTimeline from '@/components/accreditation-timeline';
 import { Badge } from '@/components/ui/badge';
@@ -232,6 +233,10 @@ export default function AccreditationForm({
         setIsDragOver(false);
         const file = e.dataTransfer.files?.[0] || null;
         if (file) {
+            if (file.size > 10 * 1024 * 1024) {
+                toast.error(`Ukuran file "${file.name}" (${(file.size / (1024 * 1024)).toFixed(1)} MB) melebihi batas 10 MB.`);
+                return;
+            }
             setData((prev) => ({
                 ...prev,
                 certificate_file: file,
@@ -906,6 +911,11 @@ export default function AccreditationForm({
                                         accept=".pdf,image/png,image/jpeg,image/webp"
                                         onChange={(e) => {
                                             const file = e.target.files?.[0] || null;
+                                            if (file && file.size > 10 * 1024 * 1024) {
+                                                toast.error(`Ukuran file "${file.name}" (${(file.size / (1024 * 1024)).toFixed(1)} MB) melebihi batas 10 MB.`);
+                                                e.target.value = '';
+                                                return;
+                                            }
                                             setData((prev) => ({
                                                 ...prev,
                                                 certificate_file: file,

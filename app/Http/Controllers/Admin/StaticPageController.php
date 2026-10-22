@@ -24,16 +24,32 @@ class StaticPageController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $rules = [
             'title' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:static_pages,slug',
             'type' => 'required|string|in:default,org_structure,documents',
             'content' => 'nullable|string',
             'meta_description' => 'nullable|string|max:255',
             'data' => 'nullable|array',
+        ];
+
+        if ($request->input('type') === 'documents' && is_array($request->input('data'))) {
+            $rules['data.*.title'] = 'required|string|max:255';
+            $rules['data.*.description'] = 'nullable|string|max:1000';
+            $rules['data.*.is_external_link'] = 'nullable';
+            $rules['data.*.url'] = 'nullable|url|max:1000';
+            $rules['data.*.file'] = 'nullable';
+        }
+
+        $validated = $request->validate($rules, [
+            'title.required' => 'Judul halaman wajib diisi.',
+            'slug.unique' => 'Slug halaman sudah digunakan.',
+            'data.*.title.required' => 'Judul pada setiap baris dokumen wajib diisi.',
+            'data.*.url.url' => 'Format URL tautan eksternal tidak valid.',
         ]);
 
-        $validated['data'] = $this->processDataFiles($request, $validated['data'] ?? []);
+        $rawItems = $request->input('data', []);
+        $validated['data'] = is_array($rawItems) ? $this->processDataFiles($request, $rawItems, []) : null;
 
         StaticPage::create($validated);
 
@@ -49,16 +65,32 @@ class StaticPageController extends Controller
 
     public function update(Request $request, StaticPage $staticPage)
     {
-        $validated = $request->validate([
+        $rules = [
             'title' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:static_pages,slug,' . $staticPage->id,
             'type' => 'required|string|in:default,org_structure,documents',
             'content' => 'nullable|string',
             'meta_description' => 'nullable|string|max:255',
             'data' => 'nullable|array',
+        ];
+
+        if ($request->input('type') === 'documents' && is_array($request->input('data'))) {
+            $rules['data.*.title'] = 'required|string|max:255';
+            $rules['data.*.description'] = 'nullable|string|max:1000';
+            $rules['data.*.is_external_link'] = 'nullable';
+            $rules['data.*.url'] = 'nullable|url|max:1000';
+            $rules['data.*.file'] = 'nullable';
+        }
+
+        $validated = $request->validate($rules, [
+            'title.required' => 'Judul halaman wajib diisi.',
+            'slug.unique' => 'Slug halaman sudah digunakan.',
+            'data.*.title.required' => 'Judul pada setiap baris dokumen wajib diisi.',
+            'data.*.url.url' => 'Format URL tautan eksternal tidak valid.',
         ]);
 
-        $validated['data'] = $this->processDataFiles($request, $validated['data'] ?? [], $staticPage->data ?? []);
+        $rawItems = $request->input('data', []);
+        $validated['data'] = is_array($rawItems) ? $this->processDataFiles($request, $rawItems, $staticPage->data ?? []) : null;
 
         $staticPage->update($validated);
 
@@ -70,10 +102,10 @@ class StaticPageController extends Controller
         // Cleanup stored files from disk
         if (is_array($staticPage->data)) {
             foreach ($staticPage->data as $item) {
-                if (!empty($item['photo']) && Storage::disk('public')->exists($item['photo'])) {
+                if (!empty($item['photo']) && is_string($item['photo']) && Storage::disk('public')->exists($item['photo'])) {
                     Storage::disk('public')->delete($item['photo']);
                 }
-                if (!empty($item['file']) && Storage::disk('public')->exists($item['file'])) {
+                if (!empty($item['file']) && is_string($item['file']) && Storage::disk('public')->exists($item['file'])) {
                     Storage::disk('public')->delete($item['file']);
                 }
             }
@@ -83,57 +115,81 @@ class StaticPageController extends Controller
         return redirect()->route('admin.static-pages.index')->with('success', 'Halaman berhasil dihapus.');
     }
 
-    private function processDataFiles(Request $request, array $data, array $oldData = [])
+    private function processDataFiles(Request $request, array $data, array $oldData = []): array
     {
+        // Kumpulkan semua file lama yang pernah tersimpan di disk
+        $allOldFiles = [];
+        foreach ($oldData as $oldItem) {
+            if (!empty($oldItem['photo']) && is_string($oldItem['photo'])) {
+                $allOldFiles[] = $oldItem['photo'];
+            }
+            if (!empty($oldItem['file']) && is_string($oldItem['file'])) {
+                $allOldFiles[] = $oldItem['file'];
+            }
+        }
+
         foreach ($data as $index => &$item) {
-            // Process photo for org_structure
+            // 1. Process photo for org_structure
             if ($request->hasFile("data.{$index}.photo")) {
                 $request->validate([
                     "data.{$index}.photo" => 'file|mimes:jpeg,png,jpg,webp|max:2048',
+                ], [
+                    "data.{$index}.photo.max" => 'Ukuran foto pada baris ke-' . ($index + 1) . ' maksimal 2 MB.',
                 ]);
-
-                // Delete old photo if it exists
-                $oldPhoto = $oldData[$index]['photo'] ?? null;
-                if ($oldPhoto && is_string($oldPhoto) && Storage::disk('public')->exists($oldPhoto)) {
-                    Storage::disk('public')->delete($oldPhoto);
-                }
 
                 $item['photo'] = $request->file("data.{$index}.photo")->store('static_pages', 'public');
             } else {
-                // Keep the existing photo if it's already a string path (unchanged)
-                // If it is explicitly deleted or empty, set to null and clean up disk
-                if (!isset($item['photo']) || $item['photo'] === 'null' || $item['photo'] === '' || $item['photo'] === null) {
-                    $oldPhoto = $oldData[$index]['photo'] ?? null;
-                    if ($oldPhoto && is_string($oldPhoto) && Storage::disk('public')->exists($oldPhoto)) {
-                        Storage::disk('public')->delete($oldPhoto);
-                    }
+                if (empty($item['photo']) || $item['photo'] === 'null' || $item['photo'] === '') {
                     $item['photo'] = null;
                 }
             }
 
-            // Process file for documents
-            if ($request->hasFile("data.{$index}.file")) {
-                $request->validate([
-                    "data.{$index}.file" => 'file|mimes:pdf,doc,docx,xls,xlsx,zip,rar|max:10240',
-                ]);
+            // 2. Process file for documents
+            $isExternal = filter_var($item['is_external_link'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
-                // Delete old document file if it exists
-                $oldFile = $oldData[$index]['file'] ?? null;
-                if ($oldFile && is_string($oldFile) && Storage::disk('public')->exists($oldFile)) {
-                    Storage::disk('public')->delete($oldFile);
-                }
-
-                $item['file'] = $request->file("data.{$index}.file")->store('static_pages', 'public');
+            if ($isExternal) {
+                // Jika bertipe tautan eksternal, bersihkan field file
+                $item['file'] = null;
+                $item['is_external_link'] = true;
             } else {
-                // Keep the existing file if it's already a string path (unchanged)
-                // If it is explicitly deleted or empty, set to null and clean up disk
-                if (!isset($item['file']) || $item['file'] === 'null' || $item['file'] === '' || $item['file'] === null) {
-                    $oldFile = $oldData[$index]['file'] ?? null;
-                    if ($oldFile && is_string($oldFile) && Storage::disk('public')->exists($oldFile)) {
-                        Storage::disk('public')->delete($oldFile);
+                // Jika bertipe berkas fisik, bersihkan field url
+                $item['url'] = null;
+                $item['is_external_link'] = false;
+
+                if ($request->hasFile("data.{$index}.file")) {
+                    $request->validate([
+                        "data.{$index}.file" => 'file|mimes:pdf,doc,docx,xls,xlsx,zip,rar|max:10240',
+                    ], [
+                        "data.{$index}.file.max" => 'Ukuran berkas pada baris ke-' . ($index + 1) . ' maksimal 10 MB.',
+                        "data.{$index}.file.mimes" => 'Format berkas pada baris ke-' . ($index + 1) . ' harus berupa PDF, DOC, DOCX, XLS, XLSX, ZIP, atau RAR.',
+                    ]);
+
+                    $item['file'] = $request->file("data.{$index}.file")->store('static_pages', 'public');
+                } else {
+                    if (empty($item['file']) || $item['file'] === 'null' || $item['file'] === '') {
+                        $item['file'] = null;
                     }
-                    $item['file'] = null;
                 }
+            }
+        }
+        unset($item);
+
+        // Kumpulkan file yang aktif dipakai pada data yang baru
+        $newFiles = [];
+        foreach ($data as $newItem) {
+            if (!empty($newItem['photo']) && is_string($newItem['photo'])) {
+                $newFiles[] = $newItem['photo'];
+            }
+            if (!empty($newItem['file']) && is_string($newItem['file'])) {
+                $newFiles[] = $newItem['file'];
+            }
+        }
+
+        // Hapus file lama yang tidak lagi digunakan di susunan data baru (diff cleanup)
+        $filesToDelete = array_diff($allOldFiles, $newFiles);
+        foreach ($filesToDelete as $fileToDelete) {
+            if (Storage::disk('public')->exists($fileToDelete)) {
+                Storage::disk('public')->delete($fileToDelete);
             }
         }
 

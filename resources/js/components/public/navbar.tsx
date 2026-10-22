@@ -31,13 +31,35 @@ interface MenuItemProps {
 
 const getChildren = (item: any): any[] => item?.children || item?.children_recursive || [];
 
-const isItemActive = (menuUrl: string | null, currentUrl: string): boolean => {
-    if (!menuUrl || menuUrl === '#' || typeof currentUrl !== 'string') {
+export const normalizeMenuUrl = (url: string | null | undefined, type: string = 'internal'): string => {
+    if (!url || url === '#' || url.trim() === '') {
+        return '#';
+    }
+
+    const trimmed = url.trim();
+
+    if (
+        type === 'external' ||
+        trimmed.startsWith('http://') ||
+        trimmed.startsWith('https://') ||
+        trimmed.startsWith('mailto:') ||
+        trimmed.startsWith('tel:')
+    ) {
+        return trimmed;
+    }
+
+    // Pastikan rute internal selalu diawali '/' agar tidak dianggap relative path oleh browser
+    return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+};
+
+const isItemActive = (menuUrl: string | null, currentUrl: string, type: string = 'internal'): boolean => {
+    const normalizedMenu = normalizeMenuUrl(menuUrl, type);
+    if (!normalizedMenu || normalizedMenu === '#' || typeof currentUrl !== 'string') {
         return false;
     }
 
     const cleanCurrent = currentUrl.split('?')[0].split('#')[0];
-    const cleanMenu = menuUrl.split('?')[0].split('#')[0];
+    const cleanMenu = normalizedMenu.split('?')[0].split('#')[0];
 
     if (cleanMenu === '/') {
         return cleanCurrent === '/';
@@ -47,7 +69,7 @@ const isItemActive = (menuUrl: string | null, currentUrl: string): boolean => {
 };
 
 const isMenuBranchActive = (item: any, currentUrl: string): boolean => {
-    if (item?.url && isItemActive(item.url, currentUrl)) {
+    if (item?.url && isItemActive(item.url, currentUrl, item?.type)) {
         return true;
     }
 
@@ -69,8 +91,8 @@ function DesktopMenuItem({
 }) {
     const children = getChildren(item);
     const hasChildren = children.length > 0;
-    const itemUrl = item.url || '#';
-    const isActive = isItemActive(item.url, currentUrl);
+    const itemUrl = normalizeMenuUrl(item.url, item.type);
+    const isActive = isItemActive(item.url, currentUrl, item.type);
     const isBranchActive = isMenuBranchActive(item, currentUrl);
     const [isFlyoutOpen, setIsFlyoutOpen] = useState(false);
     const flyoutTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -279,8 +301,8 @@ function MobileMenuItem({
     const children = getChildren(item);
     const hasChildren = children.length > 0;
     const isExpanded = Boolean(mobileExpanded[item.id]);
-    const itemUrl = item.url || '#';
-    const isActive = isItemActive(item.url, currentUrl);
+    const itemUrl = normalizeMenuUrl(item.url, item.type);
+    const isActive = isItemActive(item.url, currentUrl, item.type);
     const isBranchActive = isMenuBranchActive(item, currentUrl);
 
     if (item.type === 'label') {
@@ -547,7 +569,7 @@ export default function Navbar() {
                             const children = getChildren(menu);
                             const hasChildren = children.length > 0;
                             const isBranchActive = isMenuBranchActive(menu, url);
-                            const active = isItemActive(menu.url, url);
+                            const active = isItemActive(menu.url, url, menu.type);
 
                             if (hasChildren) {
                                 return (
@@ -625,7 +647,7 @@ export default function Navbar() {
                                 );
                             }
 
-                            const menuUrl = menu.url || '#';
+                            const menuUrl = normalizeMenuUrl(menu.url, menu.type);
 
                             if (menu.type === 'external') {
                                 return (
@@ -743,7 +765,7 @@ export default function Navbar() {
                             const hasChildren = children.length > 0;
                             const isExpanded = mobileExpanded[menu.id];
                             const isBranchActive = isMenuBranchActive(menu, url);
-                            const active = isItemActive(menu.url, url);
+                            const active = isItemActive(menu.url, url, menu.type);
 
                             if (hasChildren) {
                                 return (
@@ -790,7 +812,7 @@ export default function Navbar() {
                                 );
                             }
 
-                            const menuUrl = menu.url || '#';
+                            const menuUrl = normalizeMenuUrl(menu.url, menu.type);
 
                             if (menu.type === 'external') {
                                 return (

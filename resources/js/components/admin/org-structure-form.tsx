@@ -11,6 +11,7 @@ import {
     Users,
 } from 'lucide-react';
 import { useRef } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -101,6 +102,11 @@ export default function OrgStructureForm({
     };
 
     const handlePhotoChange = (index: number, file: File | null) => {
+        if (file && file.size > 3 * 1024 * 1024) {
+            toast.error(`Ukuran foto "${file.name}" (${(file.size / (1024 * 1024)).toFixed(1)} MB) melebihi batas 3 MB.`);
+            handleRemovePhoto(index);
+            return;
+        }
         handleChange(index, 'photo', file);
     };
 

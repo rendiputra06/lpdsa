@@ -42,6 +42,8 @@
 - [x] Buat migrasi tabel `static_pages` (halaman statis: Tentang & Kontak)
 - [x] Buat migrasi tabel `banners` (banner/hero landing page)
 - [x] Buat migrasi tabel `activity_logs` (log aktivitas admin)
+- [x] Buat migrasi tabel `spmi_categories` (kategori kriteria SPMI)
+- [x] Buat migrasi tabel `spmi_documents` (repositori dokumen kebijakan SPMI)
 
 ### Model & Relasi
 - [x] Buat model `User` dengan role (Super Admin / Admin)
@@ -53,6 +55,7 @@
 - [x] Buat model `StaticPage`
 - [x] Buat model `Banner`
 - [x] Buat model `ActivityLog`
+- [x] Buat model `SpmiCategory` & `SpmiDocument` (relasi kategori ke dokumen)
 
 ---
 
@@ -126,6 +129,13 @@
 - [x] Generate halaman sitemap dinamis (sitemap.xml)
 - [x] Daftarkan semua halaman publik yang tersedia
 
+### 5.9 Repositori Dokumen Kebijakan SPMI
+- [x] Halaman Induk Kebijakan SPMI (`/spmi/penetapan/kebijakan`) dengan Horizontal Filter Tabs
+- [x] Halaman Kategori Khusus (`/spmi/penetapan/kebijakan/{slug}`) dari Sub-Menu tanpa Horizontal Tabs
+- [x] Pencarian dokumen berdasarkan nomor SK, judul, dan deskripsi
+- [x] Filter sortir tahun (terbaru / terlama)
+- [x] Tautan direct preview berkas PDF / Google Drive Viewer
+
 ---
 
 ## ⚙️ FASE 6 – Panel Admin (Backend)
@@ -192,6 +202,13 @@
 - [x] Halaman daftar log aktivitas (siapa, aksi apa, kapan, pada data apa)
 - [x] Filter log berdasarkan pengguna, jenis aksi, dan rentang tanggal
 - [ ] Fungsi hapus log lama (opsional)
+
+### 6.9 Manajemen Dokumen & Kategori SPMI (CRUD)
+- [x] Halaman manajemen terpadu dokumen dan kategori kriteria SPMI (`/admin/spmi/documents`)
+- [x] Form modal tambah & edit dokumen (Nomor SK, Judul, Tahun, Link Drive / Upload PDF)
+- [x] Form modal tambah & edit kategori kriteria SPMI (Nama, Slug, Urutan, Deskripsi)
+- [x] Fitur otomatis pengecekan ketersediaan menu navigasi publik (`is_menu_published`)
+- [x] Fitur 1-Click daftarkan kategori ke struktur menu navigasi berjenjang (SPMI > Penetapan > Kebijakan > {Kategori})
 
 ---
 

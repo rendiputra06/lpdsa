@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import {
     Award,
+    FileCheck,
     FileText,
     Globe,
     GraduationCap,
@@ -11,6 +12,7 @@ import {
     Menu as MenuIcon,
     Plus,
     Settings,
+    ShieldCheck,
     Tags,
     Users,
 } from 'lucide-react';
@@ -54,6 +56,11 @@ const navGroups: NavGroup[] = [
                 title: 'Unit Akademik',
                 href: admin.academicUnits.index(),
                 icon: GraduationCap,
+            },
+            {
+                title: 'Dokumen SPMI',
+                href: '/admin/spmi/documents',
+                icon: ShieldCheck,
             },
         ],
     },
